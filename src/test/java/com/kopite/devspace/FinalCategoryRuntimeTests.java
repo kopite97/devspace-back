@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** Separate database: real V17 startup and Hibernate validate, with the final retirement switch. */
-@SpringBootTest(properties={"app.category-transition.legacy-replay-enabled=false",
+/** Separate final DB: even the obsolete true override cannot restore legacy HTTP serving. */
+@SpringBootTest(properties={"app.category-transition.legacy-replay-enabled=true",
     "spring.flyway.locations=filesystem:src/main/resources/db/migration,filesystem:src/main/migration-stages/cutover,filesystem:src/main/migration-stages/contract"})
 @ActiveProfiles("test") @AutoConfigureMockMvc @Testcontainers
 class FinalCategoryRuntimeTests {
@@ -65,6 +65,22 @@ class FinalCategoryRuntimeTests {
         assertEquals(6L,jdbc.queryForObject("select data_revision from workspaces where id=?",Long.class,owner.workspace().getId()));
         for(String table:List.of("project","task","journal","milestone","link"))
             assertEquals(0,jdbc.queryForObject("select count(*) from "+table+"_create_idempotency where key='old'",Integer.class));
+        mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/widgets").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/widget-types").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/projects")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/projects").session(session).header("Origin",origin)
+            .header("Idempotency-Key","old").contentType("application/json").content("{}"))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/projects").session(session).header("Origin",origin).header("X-CSRF-Token",csrf)
+            .contentType("application/json").content("{}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/projects").session(session).header("Origin",origin).header("X-CSRF-Token",csrf)
+            .header("Idempotency-Key","old").contentType("application/json"))
+            .andExpect(status().isBadRequest());
+        jdbc.update("update users set disabled_at=now() where id=?",owner.user().getId());
+        mvc.perform(get("/api/v1/projects").session(session)).andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ACCOUNT_DISABLED"));
     }
     String create(MockHttpSession session,String csrf,String path,String key,String body)throws Exception {
         return mvc.perform(post(path).session(session).header("Origin",origin).header("X-CSRF-Token",csrf).header("Idempotency-Key",key).contentType("application/json").content(body))

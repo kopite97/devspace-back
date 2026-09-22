@@ -6,8 +6,8 @@ This is the PLAN-0013 handoff procedure, not approval to perform production oper
 
 - Obtain separate production approval and coordinate the frontend release. The existing frontend's Dashboard v2 contract receives 410 after this switch; it cannot use the new layout without adaptation.
 - Determine the actual database stage, replay expiry, saved Dashboard count/size, and writer instances. Resolve V16 manifests and V17's legacy replay drain before V18. Never bypass the drain or apply V17 after V18.
-- Preserve the pre-Widget bridge artifact/source for the replay window. Widget releases accept only explicit `-PcategoryStage=final` / Docker `--build-arg CATEGORY_STAGE=final`. Keep Hibernate `validate` and immutable Flyway checksums.
-- Inspect the final JAR: V1-V18, staged V16/V17 exactly once, final `category-transition.properties` with legacy replay disabled. No new dependency or environment variable is needed.
+- Preserve the pre-Widget bridge artifact/source as archive-only recovery evidence for isolated upgrades of old backups. Current builds use `./gradlew.bat bootJar` or `docker build -t devspace-backend .` without stage arguments. Keep Hibernate `validate` and immutable Flyway checksums.
+- Inspect the final JAR: V1-V18, staged V16/V17 exactly once, no generated transition property or bridge-serving classes. Legacy HTTP replay is permanently retired. No new dependency or environment variable is needed. Use [artifact inspection](reviews/plan0014/inspect-artifact.ps1).
 - Back up the database and verify a recovery procedure appropriate to its actual volume. SQL transaction rollback on disposable fixtures was tested; a production backup restore and its duration were not.
 
 ## Expand and backfill/switch

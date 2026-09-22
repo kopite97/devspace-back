@@ -1,0 +1,13 @@
+allprojects {
+    tasks.withType(Test).configureEach {
+        systemProperty 'spring.config.location', 'classpath:widget-isolated-test.yml'
+        maxParallelForks = 1
+    }
+    tasks.register('plan0014Classpath') {
+        doLast {
+            def destination = file('.gradle/plan0014/runtime-classpath.txt')
+            destination.parentFile.mkdirs()
+            destination.text = sourceSets.main.runtimeClasspath.asPath
+        }
+    }
+}

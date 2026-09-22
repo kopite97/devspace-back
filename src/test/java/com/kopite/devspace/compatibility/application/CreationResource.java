@@ -1,4 +1,5 @@
 package com.kopite.devspace.compatibility.application;
+// Historical bridge test fixture only.
 public enum CreationResource {
     PROJECT("projects"),TASK("tasks"),JOURNAL("journals"),MILESTONE("milestones"),LINK("links");
     private final String path;

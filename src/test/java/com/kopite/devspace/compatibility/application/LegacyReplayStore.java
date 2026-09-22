@@ -1,4 +1,5 @@
 package com.kopite.devspace.compatibility.application;
+// Historical bridge test fixture only.
 import java.time.Instant;
 import java.util.*;
 public interface LegacyReplayStore {

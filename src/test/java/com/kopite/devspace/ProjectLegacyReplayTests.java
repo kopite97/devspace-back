@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Historical bridge replay remains a compatibility test, not a supported final runtime mode.
+// Retained historical records remain readable while the old HTTP endpoint is permanently retired.
 @SpringBootTest(properties="app.category-transition.legacy-replay-enabled=true") @ActiveProfiles("test") @Import(TestcontainersConfiguration.class) @AutoConfigureMockMvc
 class ProjectLegacyReplayTests {
     @Autowired UserWorkspaceCreationService users;
@@ -33,7 +33,7 @@ class ProjectLegacyReplayTests {
     @Autowired tools.jackson.databind.json.JsonMapper json;
     @org.springframework.beans.factory.annotation.Value("${app.security.origin}") String origin;
 
-    @Test void oldSnapshotHasExactHttpShapeAndNewOmittedSnapshotIncludesNull() throws Exception {
+    @Test void migratedOldSnapshotIsPreservedBehindRetiredHttpAndNewSnapshotIncludesNull() throws Exception {
         var owner=users.createOrReuse("legacy-replay",UUID.randomUUID().toString(),"Owner");
         var context=SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new UsernamePasswordAuthenticationToken(new InternalUserPrincipal(owner.user().getId(),"Owner"),null,List.of()));
@@ -58,8 +58,9 @@ class ProjectLegacyReplayTests {
         // No live Project row exists: replay must neither look it up nor resurrect it.
         String actual=mvc.perform(post("/api/v1/projects").session(session).header("X-CSRF-Token",token).header("Origin",origin)
             .header("Idempotency-Key","old").contentType("application/json").content("{\"name\":\"Project\",\"scope\":\"unity\",\"stack\":\"Java\"}"))
-            .andExpect(handler().methodName("replay")).andExpect(status().isCreated()).andExpect(content().string(body)).andReturn().getResponse().getContentAsString();
-        assertFalse(json.readTree(actual).has("categoryId"));
+            .andExpect(handler().methodName("replay")).andExpect(status().isGone()).andExpect(jsonPath("$.code").value("API_VERSION_RETIRED")).andReturn().getResponse().getContentAsString();
+        assertEquals(body,jdbc.queryForObject("select response_body from project_create_idempotency where workspace_id=? and key='old'",String.class,owner.workspace().getId()));
+        assertTrue(replays.find(owner.workspace().getId(),"old").orElseThrow().legacy());
         assertEquals(0L,jdbc.queryForObject("select data_revision from workspaces where id=?",Long.class,owner.workspace().getId()));
         assertEquals(expiry,jdbc.queryForObject("select expires_at from project_create_idempotency where workspace_id=?",java.sql.Timestamp.class,owner.workspace().getId()));
         var created=commands.create(owner.user().getId(),"new",new CreateProjectCommand("Project",null,"Java",null,null,null));
@@ -69,6 +70,6 @@ class ProjectLegacyReplayTests {
         jdbc.update("update project_create_idempotency set created_at=now()-interval '2 days',expires_at=now()-interval '1 day' where workspace_id=? and key='old'",owner.workspace().getId());
         assertTrue(replays.find(owner.workspace().getId(),"old").orElseThrow().legacy());
         assertEquals(body,jdbc.queryForObject("select response_body from project_create_idempotency where workspace_id=? and key='old'",String.class,owner.workspace().getId()));
-        Path out=Path.of(".gradle/project-category-validation/replay");Files.createDirectories(out);Files.writeString(out.resolve("legacy-response.json"),actual);Files.writeString(out.resolve("new-omitted-response.json"),stored);
+        Path out=Path.of(".gradle/plan0014/replay");Files.createDirectories(out);Files.writeString(out.resolve("retired-response.json"),actual);Files.writeString(out.resolve("new-omitted-response.json"),stored);
     }
 }

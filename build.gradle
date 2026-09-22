@@ -49,29 +49,12 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Widget releases require the post-V17 schema. Never silently opt into contract migrations.
-def categoryStage = providers.gradleProperty('categoryStage')
-// Compilation is not a release or database operation. Guard executable workflows instead.
-// Keep validation as a dependency so up-to-date outputs cannot bypass the check.
-def validateCategoryStage = tasks.register('validateCategoryStage') {
-    group = 'verification'
-    description = 'Require explicit final selection before packaging, testing or Gradle application startup.'
-    doLast {
-        if (categoryStage.orNull != 'final') {
-            throw new GradleException('This release is final-only. Specify -PcategoryStage=final explicitly. ' +
-                'For the bridge replay window use the preserved pre-Widget artifact/source; ' +
-                'see docs/project-category-only-rollout.md. V17 drain checks still apply at startup.')
-        }
-    }
-}
-['bootJar', 'jar', 'bootRun', 'test'].each { taskName ->
-    tasks.named(taskName) { dependsOn(validateCategoryStage) }
-}
+// One final schema policy. Startup still enforces immutable Flyway migrations and V17 drain checks.
 tasks.named('processResources') {
     from('src/main/migration-stages/cutover') { into 'db/migration' }
     from('src/main/migration-stages/contract') { into 'db/migration' }
-    doLast {
-        new File(destinationDir, 'category-transition.properties').text =
-            "app.category-transition.legacy-replay-enabled=false\n"
+    doFirst {
+        // Remove only the obsolete generated resource left by an incremental pre-retirement build.
+        delete new File(destinationDir, 'category-transition.properties')
     }
 }

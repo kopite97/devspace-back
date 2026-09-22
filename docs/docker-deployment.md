@@ -57,7 +57,6 @@ Render가 제공하는 `postgresql://user:password@host/database`는 JDBC URL이
 | `PORT` | 로컬 .env에는 없는 Render 포트 설정. `8080` 지정 |
 | `SERVER_PORT` | Spring Boot 표준 설정. 기본 8080을 쓰면 불필요 |
 | `SERVER_FORWARD_HEADERS_STRATEGY` | Spring Boot 표준 프록시 설정. Render에서는 `framework` 지정 |
-| `CATEGORY_STAGE` | Required Docker build argument: `final`. Omitted, `bridge`, and invalid values fail the build. Runtime settings cannot change an already built JAR. |
 
 `spring.flyway.init-sqls[0]`는 로컬에서 `.env`를 Java properties로 읽기 때문에 적용되는 속성이다.
 일반 환경변수와 구분해야 하며, 기존 DB의 ID·revision을 담은 manifest를 다른 DB에 재사용하면
@@ -75,20 +74,20 @@ Google OAuth 콘솔에도 `OIDC_GOOGLE_REDIRECT_URI`와 정확히 같은 승인�
 ## 마이그레이션
 
 새 DB는 기동 시 Flyway로 스키마가 생성된다. 기존 로컬 데이터는 자동 복사되지 않는다.
-This source produces final-only artifacts. Explicitly supply `CATEGORY_STAGE=final` at Docker build time;
-there is no implicit stage. The build includes V17 but does not execute migrations. Startup still requires
+This source unconditionally produces final-schema artifacts; no stage build argument is used.
+The build includes V1-V18 but does not execute migrations. Startup still requires
 the reviewed V16 manifest where applicable and V17 replay-drain prerequisites. Follow the
 [rollout procedure](project-category-only-rollout.md) before starting an image against an existing database.
 For a database still in the bridge window, use the preserved pre-Widget artifact/source, not this image.
-Configure the build argument in the hosting build configuration and rebuild; changing a running service's
-environment alone cannot alter the packaged migrations. No hosting or database configuration was changed here.
+Legacy HTTP replay cannot be enabled by runtime configuration. PLAN-0014 verified local admission only;
+Render remains uninspected and requires its own database, retention, writer and backup admission before release.
 
 ## 개인 서버로 이전
 
 동일한 Dockerfile로 이미지를 만들고 실행 환경의 DB 주소만 교체할 수 있다.
 
 ```sh
-docker build --build-arg CATEGORY_STAGE=final -t devspace-backend .
+docker build -t devspace-backend .
 docker run -d --name devspace-backend --env-file .env -p 127.0.0.1:8080:8080 devspace-backend
 ```
 

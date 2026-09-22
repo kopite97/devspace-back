@@ -1,0 +1,115 @@
+{
+  "result": "WIDGET_SWAGGER_AND_BROWSER_PASS",
+  "renderedOperations": [
+    [
+      "GET",
+      "/api/v1/widget-types"
+    ],
+    [
+      "GET",
+      "/api/v1/widgets"
+    ],
+    [
+      "POST",
+      "/api/v1/widgets"
+    ],
+    [
+      "GET",
+      "/api/v1/widgets/{id}"
+    ],
+    [
+      "PUT",
+      "/api/v1/widgets/{id}"
+    ],
+    [
+      "DELETE",
+      "/api/v1/widgets/{id}"
+    ],
+    [
+      "GET",
+      "/api/v1/widgets/{id}/data"
+    ],
+    [
+      "GET",
+      "/api/v3/dashboards/home"
+    ],
+    [
+      "PUT",
+      "/api/v3/dashboards/home"
+    ],
+    [
+      "POST",
+      "/api/v3/dashboards/home/initializations"
+    ]
+  ],
+  "swaggerExecute": true,
+  "nullableObjectSchemas": true,
+  "runtime": [
+    {
+      "method": "GET",
+      "path": "/api/v1/widget-types",
+      "status": 200,
+      "revision": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v3/dashboards/home",
+      "status": 200,
+      "revision": "0"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/widgets",
+      "status": 201,
+      "revision": "1"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/dashboards/home",
+      "status": 200,
+      "revision": "2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/widgets/f0ce37d3-418f-4cf8-bd34-de7214d4c6d4/data",
+      "status": 200,
+      "revision": "2"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/widgets/f0ce37d3-418f-4cf8-bd34-de7214d4c6d4?revision=1",
+      "status": 409,
+      "revision": null
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v3/dashboards/home",
+      "status": 200,
+      "revision": "3"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/widgets/f0ce37d3-418f-4cf8-bd34-de7214d4c6d4?revision=1",
+      "status": 200,
+      "revision": "4"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/widgets",
+      "status": 201,
+      "revision": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/widgets/f0ce37d3-418f-4cf8-bd34-de7214d4c6d4",
+      "status": 404,
+      "revision": null
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/dashboards/home",
+      "status": 410,
+      "revision": null
+    }
+  ]
+}

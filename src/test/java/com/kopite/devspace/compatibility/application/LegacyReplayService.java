@@ -7,12 +7,12 @@ import com.kopite.devspace.journal.domain.JournalRepository;
 import com.kopite.devspace.milestone.domain.MilestoneRepository;
 import com.kopite.devspace.workspace.domain.PersonalWorkspaceRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.util.UUID;
 
-@Service @RequiredArgsConstructor
+/** Historical bridge concurrency fixture; explicitly imported by its test only. */
+@RequiredArgsConstructor
 public class LegacyReplayService {
     private final CurrentUserService currentUser;
     private final PersonalWorkspaceRepository workspaces;

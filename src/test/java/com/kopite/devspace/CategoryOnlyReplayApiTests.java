@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Historical bridge adapter contract only; final artifact retirement is tested separately.
+// An obsolete true property must never re-enable historical HTTP replay.
 @SpringBootTest(properties="app.category-transition.legacy-replay-enabled=true") @ActiveProfiles("test") @Import(TestcontainersConfiguration.class) @AutoConfigureMockMvc
 class CategoryOnlyReplayApiTests {
     @Autowired MockMvc mvc; @Autowired UserWorkspaceCreationService users; @Autowired JdbcTemplate jdbc; @Autowired JsonMapper json;
@@ -46,17 +46,17 @@ class CategoryOnlyReplayApiTests {
             String r=fixture.path("resource").asString(),key="historical-"+n++,body=fixture.path("requestBody").asString(),expected=fixture.path("responseBody").asString();
             jdbc.update("insert into "+r+"_create_idempotency values(?,'POST',?,?,?,201,?,now(),now()+interval '24 hours')",o.workspace(),"/api/v1/"+r+"s",key,fixture.path("requestHash").asString(),expected);
             var before=jdbc.queryForMap("select * from "+r+"_create_idempotency where workspace_id=? and key=?",o.workspace(),key);
-            assertEquals(expected,post(o,"/api/v1/"+r+"s",key,body,201));
+            assertEquals("API_VERSION_RETIRED",json.readTree(post(o,"/api/v1/"+r+"s",key,body,410)).path("code").asString());
             var normal=(tools.jackson.databind.node.ObjectNode)json.readTree(body);normal.remove("scope");
             assertEquals("IDEMPOTENCY_KEY_REUSED",json.readTree(post(o,"/api/v2/"+r+"s",key,normal.toString(),409)).path("code").asString());
             assertEquals(before,jdbc.queryForMap("select * from "+r+"_create_idempotency where workspace_id=? and key=?",o.workspace(),key));
-            evidence.add(r+": historical body byte-for-byte; cross-version key conflict; row immutable");
+            evidence.add(r+": retired HTTP; cross-version key conflict; historical row byte-for-byte immutable");
         }
         assertEquals(0L,jdbc.queryForObject("select data_revision from workspaces where id=?",Long.class,o.workspace()));
         assertEquals("API_VERSION_RETIRED",json.readTree(post(o,"/api/v1/projects","missing","{\"name\":\"Project\",\"scope\":\"unity\",\"stack\":\"Java\"}",410)).path("code").asString());
         mvc.perform(get("/api/v1/projects").session(o.session())).andExpect(status().isGone());
-        post(o,"/api/v1/projects","invalid","{",400);
-        post(o,"/api/v1/projects","invalid","{\"name\":\"x\",\"name\":\"y\",\"scope\":\"unity\",\"stack\":\"Java\"}",400);
+        post(o,"/api/v1/projects","invalid","{",410);
+        post(o,"/api/v1/projects","invalid","{\"name\":\"x\",\"name\":\"y\",\"scope\":\"unity\",\"stack\":\"Java\"}",410);
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/projects").session(o.session()).header("Origin",origin)
             .header("Idempotency-Key","unauthorized").contentType("application/json").content("{}")).andExpect(status().isForbidden());
         Path out=Path.of(".gradle/project-category-only-validation/replay");Files.createDirectories(out);Files.write(out.resolve("all-resources.txt"),evidence);
@@ -74,7 +74,7 @@ class CategoryOnlyReplayApiTests {
         String omitted="{\"name\":\"Other\",\"stack\":\"Java\"}";String result=post(o,"/api/v2/projects","omitted",omitted,201);
         assertTrue(json.readTree(result).path("categoryId").isNull());
         post(o,"/api/v2/projects","omitted","{\"name\":\"Other\",\"stack\":\"Java\",\"categoryId\":null}",409);
-        post(o,"/api/v1/projects","omitted","{\"name\":\"Other\",\"stack\":\"Java\",\"scope\":\"unity\"}",409);
+        post(o,"/api/v1/projects","omitted","{\"name\":\"Other\",\"stack\":\"Java\",\"scope\":\"unity\"}",410);
         post(o,"/api/v2/projects","bad","{\"name\":\"Other\",\"stack\":\"Java\",\"scope\":\"unity\"}",400);
     }
 }

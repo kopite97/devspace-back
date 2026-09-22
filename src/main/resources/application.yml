@@ -1,7 +1,7 @@
 spring:
   # Spring Boot explicitly imports the root .env; Gradle does not load it itself.
   config:
-    import: optional:file:.env[.properties],classpath:category-transition.properties
+    import: optional:file:.env[.properties]
 
   application:
     name: devspace

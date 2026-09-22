@@ -8,13 +8,13 @@ import com.kopite.devspace.journal.presentation.dto.CreateJournalRequest;
 import com.kopite.devspace.milestone.presentation.dto.CreateMilestoneRequest;
 import com.kopite.devspace.link.domain.LinkValues;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 import java.math.BigDecimal;
 import java.util.*;
 
-@Component @RequiredArgsConstructor
+/** Preserves historical request fingerprint vectors; never registered in the runtime. */
+@RequiredArgsConstructor
 public class LegacyCreateParser {
     private final JsonMapper json;
     public LegacyCreateRequest parse(CreationResource resource,String body) {

@@ -1,7 +1,7 @@
 # PLAN-0014 Session 1: Inventory and Transition Contract
 
 Date: 2026-09-17
-State: In progress; environment gate pending.
+State: Inventory refreshed on 2026-09-22; local database is already V18 (see below).
 
 ## Repository findings
 
@@ -66,3 +66,16 @@ At the observation instant there were zero other client connections to the local
 ## Isolated contract validation
 
 Re-ran CategoryCutoverMigrationTests and WidgetMigrationTests with Java 21, explicit final stage and the existing isolated test init script. Both suites passed: 14 tests, zero failures/errors/skips. See [test summary](migration-test-results.json). This verifies existing synthetic migration contracts; it does not complete Session 2 backup/restore rehearsal or authorize local migration. All 18 migration source hashes remain unchanged and documentation links resolve.
+
+## 2026-09-22 inventory refresh
+
+The user requested completion and confirmed that `backend-postgres-1` is the only local database, with no separate backend, automatic backend restart, or pending client creation request. Render remains excluded. The existing PostgreSQL container was stopped; it was started for read-only inspection, without starting an application or executing migrations. Restart policy is `no`, the existing named volume is retained, and port 5432 is loopback-only.
+
+- Actual history is now successful V1-V18. The earlier V16 observation is historical; this execution did not perform V17/V18. Flyway `validateWithResult` over a PostgreSQL connection forced to `default_transaction_read_only=on` validated all 18 source checksums. All migration source SHA-256 values match the recorded baseline.
+- The durable deadline and exact V17 legacy-expiry predicate have elapsed. No other DB client was connected. Classification columns are absent; Widget/Placement/mapping tables exist.
+- Counts: one workspace, two Projects, three Categories, three Tasks, two Journals, one Milestone, zero Links, one saved Dashboard, six Widgets, six Placements, six mappings. Private aggregate table digests are retained in ignored `.gradle/plan0014/local-validation-before.txt` for final comparison; no bodies, credentials or user IDs are published.
+- Adjacent frontend source `../frontdev/src/features/dashboard/apiStore.ts` uses Dashboard v3 and Widget v1 configuration/type/data endpoints. This is source compatibility evidence, not a claim of production or browser deployment validation.
+- The preserved bridge JAR still matches SHA-256 `56087B56B6FA3EC717428E8A1B3D5C7849D49A179B1643F5D05B154E9AFE692A`. It remains recovery evidence only, never a valid V18 runtime. The current explicit-final JAR is retained before simplification.
+- An obsolete one-time V16 initialization property remains in the ignored local `.env`; remove only that entry after final admission. Never print or publish its manifest.
+
+Selected route: **already V18 -> read-only validation -> repository/runtime simplification**. No local SQL migration, business-data backup/export, restore, counter increment or mapping decision is necessary or authorized by this inventory. Recovery rehearsal uses synthetic data only. Future restoration of older backups still requires isolated stage-aware admission. User confirmation plus no active backend means no process shutdown is necessary; preserved bridge archives must not be launched against this DB. Session 2 now verifies failure/retry/backup restoration in disposable databases before implementation proceeds.

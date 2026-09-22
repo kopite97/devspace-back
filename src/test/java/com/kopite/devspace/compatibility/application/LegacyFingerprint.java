@@ -1,4 +1,5 @@
 package com.kopite.devspace.compatibility.application;
+// Historical bridge test fixture only.
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;

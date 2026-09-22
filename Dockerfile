@@ -8,11 +8,9 @@ COPY gradle/ ./gradle/
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 COPY src/main/ ./src/main/
 
-# Explicit opt-in; this source no longer builds bridge artifacts. No database is touched here.
-ARG CATEGORY_STAGE
+# Final schema only; database admission and migration validation happen at startup.
 RUN --mount=type=cache,target=/root/.gradle \
-    test "${CATEGORY_STAGE}" = final || { echo 'This release requires --build-arg CATEGORY_STAGE=final; use the preserved artifact for bridge.' >&2; exit 1; }; \
-    ./gradlew --no-daemon bootJar -PcategoryStage=${CATEGORY_STAGE} && \
+    ./gradlew --no-daemon bootJar && \
     cp build/libs/*.jar /workspace/app.jar
 
 FROM eclipse-temurin:21-jre-jammy AS runtime

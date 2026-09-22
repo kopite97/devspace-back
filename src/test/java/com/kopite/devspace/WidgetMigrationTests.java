@@ -99,6 +99,51 @@ class WidgetMigrationTests {
         assertEquals(UUID.fromString("e80ce8b8-a78c-3dc4-9337-e62c359c39b9"),UUID.nameUUIDFromBytes((prefix+"widget"+name).getBytes(StandardCharsets.UTF_8)));
         assertEquals(UUID.fromString("ce732f96-b7f5-3a8a-8334-cfdbb1a7ad62"),UUID.nameUUIDFromBytes((prefix+"placement"+name).getBytes(StandardCharsets.UTF_8)));
     }
+
+    @Test void postgresBackupRestoresAndFinalApplicationStartsWithoutChangingRows() throws Exception {
+        flyway(18).migrate();owner(w);
+        sql("insert into dashboards(workspace_id,dashboard_key,schema_version,revision,widgets,created_at,updated_at,layout_revision) values(?,'home',2,7,'[]',now(),now(),7)",w);
+        sql("insert into widgets(id,workspace_id,type,title,config_version,config,revision,created_at,updated_at) values(?,?,'board','Restored',1,'{\"selection\":{\"kind\":\"all\"}}',1,now(),now())",UUID.randomUUID(),w);
+        String backup="/tmp/"+schema+".dump", restored="restore_"+UUID.randomUUID().toString().replace("-","");
+        long started=System.nanoTime();
+        var dump=db.execInContainer("pg_dump","-U",db.getUsername(),"-d",db.getDatabaseName(),"-n",schema,"-Fc","-f",backup);
+        assertEquals(0,dump.getExitCode(),dump.getStderr());
+        var create=db.execInContainer("createdb","-U",db.getUsername(),restored);
+        assertEquals(0,create.getExitCode(),create.getStderr());
+        var restore=db.execInContainer("pg_restore","-U",db.getUsername(),"-d",restored,"--exit-on-error","--no-owner",backup);
+        assertEquals(0,restore.getExitCode(),restore.getStderr());
+        String restoredUrl=db.getJdbcUrl().replace("/"+db.getDatabaseName(),"/"+restored);
+        var migrated=Flyway.configure().dataSource(restoredUrl,db.getUsername(),db.getPassword()).schemas(schema).defaultSchema(schema)
+            .locations("filesystem:src/main/resources/db/migration","filesystem:src/main/migration-stages/cutover","filesystem:src/main/migration-stages/contract").load();
+        migrated.validate();assertEquals(0,migrated.migrate().migrationsExecuted);
+        var before=restoredRows(restoredUrl);
+        assertEquals(restoredRows(db.getJdbcUrl()),before);
+        try(var app=new org.springframework.boot.builder.SpringApplicationBuilder(DevspaceApplication.class).run(
+            "--spring.config.location=classpath:widget-isolated-test.yml","--server.port=0",
+            "--spring.datasource.url="+restoredUrl,"--spring.datasource.username="+db.getUsername(),"--spring.datasource.password="+db.getPassword(),
+            "--spring.datasource.hikari.schema="+schema,"--spring.flyway.default-schema="+schema,"--spring.flyway.schemas="+schema,
+            "--spring.jpa.properties.hibernate.default_schema="+schema)) {
+            assertTrue(app.isActive());
+            assertEquals(before,restoredRows(restoredUrl));
+        }
+        var evidence=Path.of("build/reports/plan0014/backup-restore.txt");Files.createDirectories(evidence.getParent());
+        Files.writeString(evidence,"Synthetic PostgreSQL custom dump -> isolated database -> Flyway validate/no-op migrate -> final application/Hibernate validate. All table contents unchanged. Duration ms="+(System.nanoTime()-started)/1_000_000.0);
+    }
+
+    Map<String,String> restoredRows(String url) throws Exception {
+        var result=new TreeMap<String,String>();
+        try(var c=DriverManager.getConnection(url,db.getUsername(),db.getPassword())) {
+            c.setSchema(schema);
+            var tables=new ArrayList<String>();
+            try(var s=c.prepareStatement("select tablename from pg_tables where schemaname=? order by tablename")) {
+                s.setString(1,schema);try(var r=s.executeQuery()){while(r.next())tables.add(r.getString(1));}
+            }
+            for(String table:tables)try(var s=c.createStatement();var r=s.executeQuery("select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]'::jsonb)::text from \""+table+"\" t")) {
+                r.next();result.put(table,r.getString(1));
+            }
+        }
+        return result;
+    }
     @Test void allTypesReorderedArraysAndExistingMappingCollision()throws Exception {
         flyway(17).migrate();owner(w);var items=new ArrayList<String>();
         for(String type:List.of("overview","board","deploy","links","journal","milestone"))items.add(widget(type+"-\u03bb|:",type,"{\"kind\":\"all\"}",""));

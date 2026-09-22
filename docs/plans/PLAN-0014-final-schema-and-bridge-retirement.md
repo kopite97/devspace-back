@@ -1,7 +1,8 @@
 # PLAN-0014: Final Schema Consolidation and Bridge Retirement
 
-Status: `active`
+Status: `completed`
 Date: 2026-09-17
+Completed: 2026-09-22
 
 ## Goal
 
@@ -18,7 +19,9 @@ Consolidation means a common schema and runtime policy across environments, not 
 - Exclude data merging, DB resets, destructive legacy JSONB/mapping/replay cleanup, shortened replay windows, new integrations, dependencies, infrastructure, frontend implementation and shared agent-guide changes.
 - Execution was approved on 2026-09-17 for repository work and isolated validation within this plan. This does not itself authorize production access, backup/export, migration, deployment or database-specific mapping choices. Obtain explicit environment/action authorization after a concrete execution package is ready; reuse authorization already supplied for that exact scope.
 
-## Repository Evidence and Current Failure
+## Historical Repository Evidence and Initial Failure
+
+This table records the pre-execution baseline. Completed Session results below describe the final implementation.
 
 | Evidence | Confirmed repository behavior |
 | --- | --- |
@@ -31,7 +34,7 @@ Consolidation means a common schema and runtime policy across environments, not 
 | [LegacyReplayController](../../src/main/java/com/kopite/devspace/compatibility/presentation/LegacyReplayController.java) | The packaged flag is false, but the controller still has an overridable enabled branch and a true fallback. Removing the generated property alone could re-enable replay. |
 | [Existing build evidence](../reviews/plan0013/build-policy.md), [Widget validation](../reviews/plan0013/session-5.md) | Isolated final migration/build checks passed; actual environment migration and frontend readiness were not verified. |
 
-Follow [the migration guide](../agents/FLYWAY.md), [Category rollout](../project-category-only-rollout.md), [Widget rollout](../widget-rollout.md), [DECISION-0002](../decisions/DECISION-0002-project-category-only-classification.md) and [DECISION-0004](../decisions/DECISION-0004-independent-widget-and-dashboard-placement.md). This proposes the retirement phase of the existing transition, not a new architecture. On approval, update only the release-policy wording of DECISION-0004 to reflect unconditional final packaging after the gate; do not supersede its Widget architecture or erase historical evidence. No Decision or shared-guide change is made by this proposal.
+Follow [the migration guide](../agents/FLYWAY.md), [Category rollout](../project-category-only-rollout.md), [Widget rollout](../widget-rollout.md), [DECISION-0002](../decisions/DECISION-0002-project-category-only-classification.md) and [DECISION-0004](../decisions/DECISION-0004-independent-widget-and-dashboard-placement.md). Execution retired the existing transition after local admission and updated only DECISION-0004's approved release-policy wording. Its Widget architecture, historical evidence and all shared agent guides are unchanged.
 
 ## Target Design and Gates
 
@@ -82,94 +85,66 @@ An additional local writer or in-scope old DB reopens the gate. Render does not 
 
 ## Execution Sessions
 
-Execute in order. Do not advance until the current session's implementation and validation are complete. Check only observed results; retain incomplete operational gates when access or approval is unavailable.
+Executed on 2026-09-22 after the user requested completion. The refreshed inventory found the local DB already at V18; the approved already-final route therefore required validation, not a schema transition. [Complete evidence and limitations](../reviews/plan0014/completion.md).
 
 ### Interim fix: IDE compilation
 
-Following the repeated IDE classes failure report on 2026-09-17, allow classes/processResources without stage selection and keep explicit-final validation on bootJar, jar, test and bootRun. Resource contents remain final-only and unchanged; no default stage is introduced. This bounded build fix precedes environment convergence because compilation does not connect to a DB. It does not complete Session 4 or authorize DB startup/migration. Native IDE Java launches bypass Gradle bootRun validation and must still follow the database admission procedure; Flyway V17 checks and Hibernate validation remain active. Full guard removal and bridge retirement retain their original gates.
+The 2026-09-17 change moved stage validation out of classes/processResources. That historical bounded fix is superseded by Session 4's complete removal of stage selection. The initial V16 DB observation is likewise historical, not the state observed during this execution.
 
 ### Session 1: Inventory and Transition Contract
 
-Objective: Freeze the target environments, target version and safe transition route.
+- [x] Rechecked guides, source dependencies, all 18 immutable migrations and preserved bridge/final artifacts.
+- [x] Inspected the authorized local database read-only. Actual V1-V18 history validates against all Flyway checksums; final tables exist and both retention deadlines have elapsed.
+- [x] User confirmed this is the only local DB, with no separate/restarting backend or pending creation request. No existing backend shutdown was needed.
+- [x] Froze the already-V18 route: no schema operation, mapping change, business-data export or restoration. Recovery rehearsal uses synthetic data; future real restores still require explicit admission and backup verification.
+- [x] Confirmed adjacent frontend source uses Dashboard v3/Widget v1. Render stays excluded and unverified.
 
-Implementation:
-
-- [x] Recheck repository/AGENTS/Decision evidence, migration inventory, build graph, property consumers and bridge-only versus shared replay dependencies.
-- [ ] Prepare the environment inventory and non-secret inspection procedure; perform real environment reads only within explicit authorization. Identify any missing access without guessing.
-- [ ] Freeze each environment's version route, writer drain, replay deadline, manifest approval, frontend readiness, backup/restore plan, execution owner and restart controls.
-
-Validation:
-
-- [ ] Every in-scope DB and writer is accounted for; unknown targets, divergent history and mapping decisions are explicit blockers.
-- [ ] Verify DB admission facts from authorized evidence, not PLAN-0013 fixtures; no unresolved migration or retirement contract remains before Session 2.
-
-Session 1 progress (2026-09-17): [inspection evidence](../reviews/plan0014/session-1.md) records the source/dependency baseline and authorized local read-only results. The user confirmed local Compose and Render PostgreSQL are active targets. Local history is V16 with observed replay deadlines elapsed; this does not establish migration readiness. Render was subsequently excluded by the user; remaining local admission checks, writers, frontend and backup/recovery remain unresolved. Session 2 has not started.
+Evidence: [refreshed Session 1 inventory](../reviews/plan0014/session-1.md). All in-scope admission facts were resolved for the already-final route; old backups are archive-only recovery cases, not supported old-schema runtimes.
 
 ### Session 2: Isolated Upgrade and Recovery Rehearsal
 
-Objective: Produce a reviewable execution package using the current explicit-final artifact and preserved stage-compatible artifacts where necessary.
+- [x] Rehearsed fresh, waiting V16, eligible V16, V17 and already-V18 cases in disposable PostgreSQL.
+- [x] Tested manifest validation, preserved rows/replay bytes/hash/expiry, missing Categories, saved-empty/absent layouts, deterministic mappings/order and counters.
+- [x] Proved expired replay cleanup cannot bypass the durable V17 deadline.
+- [x] Proved V17 can remain committed when V18 fails; corrected only the synthetic invalid fixture and retried unchanged V18 successfully.
+- [x] Used actual pg_dump/pg_restore for a synthetic final-schema backup, then started the final application against the restored database with Hibernate/Flyway validation and unchanged table contents.
+- [x] Prepared the local execution package: validate only because V18 is already applied; compare all table digests, preserve the previous final artifact, and never rerun backfill. No migration/deployment approval package is required for this no-transition route.
 
-Implementation:
-
-- [ ] Rehearse fresh, V16-waiting, eligible V16, V17 and V18 routes using synthetic fixtures or a separately authorized protected restore. Do not export production data implicitly.
-- [ ] Exercise V16 manifest validation and replay drain, V17 removal, V18 deterministic conversion, and restore/retry boundaries. Preserve artifacts/digests and measure volume/durations without inventing budgets.
-- [ ] Prepare each real environment's commands, reviewed manifest reference, backup reference, reconciliation queries, maintenance/restart procedure, smoke checks and abort criteria for final approval.
-
-Validation:
-
-- [ ] Prove V17 rejects early retirement even after expired-row cleanup; do not modify real clocks, deadlines or expiries to pass it.
-- [ ] Preserve Category/Project identities, Link assignments, historical replay bytes/hash/expiry, Widget mappings/order/omissions/missing Categories, saved-empty/absent layouts and expected counters.
-- [ ] Test failure/retry and determine actual per-migration transaction boundaries: V17 may remain committed if V18 fails. Do not claim the whole upgrade is one transaction.
-- [ ] Verify the intended backup/application pair restores in isolation. A transaction rollback test alone is not backup recovery evidence.
+The initial targeted run passed 17 migration tests; these also passed in the final full suite. [Backup restoration evidence](../reviews/plan0014/backup-restore.txt). This does not certify a real user's backup.
 
 ### Session 3: Approved Environment Convergence
 
-Objective: Bring the approved active environment inventory to the final schema before retiring transitional controls.
+- [x] Revalidated the sole active local database as V18; no Flyway migrate, backup/export, restore, mapping, maintenance drain or counter mutation was necessary.
+- [x] Started the final application with a PostgreSQL read-only connection, allowing normal Flyway no-op startup and Hibernate validation. Queried its existing layout and all six Widget payloads.
+- [x] Compared all 23 public tables before/after: counts and content digests, including history and replay data, are unchanged.
+- [x] Verified authenticated mutation/replay/Widget smoke checks in isolated databases; kept the real workspace read-only. No production load or live-data smoke mutation occurred.
+- [x] Preserved the previous explicit-final JAR/source and bridge archive; recorded restart and forward-fix/restore boundaries. No old writer is active or configured to auto-restart according to inventory and user confirmation.
 
-Implementation:
-
-- [ ] Obtain approval for the concrete Session 2 execution package where not already authorized. Stop here while required authorization/access is pending.
-- [ ] Execute each approved route with backup, old-writer drain and replay scheduling. Re-read mutable preconditions immediately before execution; leave bridge service available where the retention contract still requires it.
-- [ ] Record actual Flyway history/shape, migration results, reconciled data/counters, final artifact/frontend compatibility and confirmed old-writer shutdown per environment.
-
-Validation:
-
-- [ ] All in-scope inventory rows satisfy the retirement gate, or execution remains incomplete. A successful local migration does not imply Render readiness.
-- [ ] Authenticated read/write/replay/Widget smoke checks pass under approved operational limits; no production load test is implied.
-- [ ] Backups, artifact digests, safe restart configuration and the forward-fix/restore boundary are recorded. No unapplied legacy writer can restart against migrated data.
+Local admission is complete. Render readiness is neither required nor inferred. The existing bridge archive is retained as recovery evidence and must never run against V18.
 
 ### Session 4: Remove Transitional Build and Runtime Controls
 
-Objective: Implement one final runtime and ordinary IDE/build commands after convergence.
+- [x] Removed Gradle/Docker stage selectors and runtime property imports; V16/V17 remain in their original source directories and are always packaged.
+- [x] Replaced conditional historical HTTP replay with authenticated 410 tombstones, preserving request binding/error precedence and the separate Dashboard v2 tombstone.
+- [x] Moved seven exclusively historical collaborators into test sources without component scanning; retained their golden/concurrency tests and every normal API historical reader/canonical namespace.
+- [x] Removed only the stale generated transition file during incremental resource processing.
+- [x] Verified no-stage help/classes, incremental bootJar and clean check/bootJar; all 272 tests passed without skips.
+- [x] Verified ordinary bootRun against an isolated V18 database and direct runtime-classpath startup. IDE UI was not driven; actual compilation/startup is the documented alternative verification.
+- [x] Built Docker without a stage argument and started it against a disposable empty DB: V1-V18 and Hibernate validation passed. Copied/inspected the image JAR.
+- [x] Verified clean/incremental/Docker JARs contain 18 unique unchanged migrations and no generated transition property or bridge-serving classes.
+- [x] Verified the obsolete true replay property cannot enable serving; auth/CSRF/account checks, no-store, 410, v1 exceptions, v2 conflicts, historical snapshots and Widget contracts pass.
+- [x] Updated release/restore documentation and only DECISION-0004's approved release-policy wording. Shared guides remain unchanged.
 
-Implementation:
-
-- [ ] Remove Gradle/Docker stage options and generated-property plumbing; retain unchanged, unconditional migration packaging.
-- [ ] Replace conditional legacy replay serving with final-only tombstones. Remove only proven exclusive dependencies; retain shared historical compatibility and existing error contracts.
-- [ ] Update tests and release/restore instructions. Propose the limited accepted Decision wording update with this plan's approval; do not change shared guides.
-
-Validation:
-
-- [ ] Without categoryStage, verify help, classes, clean/incremental bootJar, test and check; verify IDE build/run against a disposable final DB. Run bootRun only with explicit isolated configuration, never the developer's unknown .env DB.
-- [ ] Build the Docker image without CATEGORY_STAGE and inspect/run it against an isolated final DB; verify Java/schema validation and no legacy-serving override. No push/deployment occurs in this session.
-- [ ] Inspect final JAR/image resources: unique V1-V18, unchanged checksums and no obsolete generated property. Verify clean and preexisting build outputs; remove only identified generated files within verified build directories if needed.
-- [ ] Authentication, CSRF, no-store, 410, normal idempotency namespaces/conflicts, historical snapshot readability and all Widget/API regressions pass. Historical bridge fixtures remain runnable in their preserved scope, not as a supported final HTTP mode.
+Evidence: [full suite](../reviews/plan0014/full-suite-results.json), [JAR](../reviews/plan0014/clean-artifact.json), [image JAR](../reviews/plan0014/docker-artifact.json), [browser/API verification](../reviews/plan0014/browser-result.json).
 
 ### Session 5: Approved Final Release and Closure
 
-Objective: Retire active bridge support across the approved inventory and hand off the simplified workflow.
-
-Implementation:
-
-- [ ] Obtain any outstanding deployment/configuration approval for the reviewed Session 4 artifact and per-environment release package.
-- [ ] Deploy only within that authorization, remove obsolete stage/build and one-time migration settings, and verify no bridge-capable service remains active or restartable. Preserve archives and recovery documentation.
-- [ ] Update current commands, inventory status, evidence and restore admission procedure; distinguish actual deployments from local build results.
-
-Validation:
-
-- [ ] Confirm normal IDE classes/run no longer fails for missing stage; confirm every approved environment starts with Flyway validation at the final schema and unchanged normal API contracts.
-- [ ] Confirm replay serving cannot be re-enabled by the old property, while stored history remains intact. Verify excluded v1 APIs are unaffected.
-- [ ] Check document paths/links, accepted release-policy wording and remaining operational limitations. No mandatory environment or release gate remains unchecked.
+- [x] Applied the simplified workflow to this local repository; built and exercised its final artifacts. No remote deployment or persistent application-service installation is part of the local route.
+- [x] Removed the completed V16 one-time initialization entry from ignored local .env, preserving all other settings and a private copy of that entry.
+- [x] Verified actual local V18 startup/read compatibility and isolated authenticated API/Swagger behavior; recorded direct-classpath/Gradle evidence instead of claiming IDE UI automation.
+- [x] Confirmed no runtime switch restores legacy serving and unaffected v1 auth/Category/Widget APIs still work.
+- [x] Updated inventory, current commands and restore admission instructions; retained immutable archives and explicit Render/real-backup limitations.
+- [x] Finished document/link checks and validation-process cleanup. Temporary servers, Chrome and validation containers are stopped/removed; the existing local DB is stopped with its volume preserved.
 
 ## Rollback and Stop Conditions
 
@@ -179,25 +154,25 @@ The simplified build change can be reverted to the previous explicit-final Widge
 
 ## Final Validation
 
-- [ ] Every required session is complete with evidence; all in-scope environments are verified final or explicitly decommissioned.
-- [ ] No categoryStage/CATEGORY_STAGE selection is required in current Gradle, IDE, Docker or deployment workflows.
-- [ ] No runtime flag can restore legacy HTTP replay service; historical data and required shared readers remain preserved.
-- [ ] Flyway history/checksums, Hibernate validate, security, normal idempotency and Widget/API contracts remain intact.
-- [ ] Fresh install, populated upgrade, already-final startup, failed transition/retry and approved recovery checks pass.
-- [ ] No failures caused by this plan remain; no unapproved data cleanup, frontend work, infrastructure or guide changes occurred.
+- [x] Every required local/repository session is complete with evidence; the sole in-scope DB is verified final. Render remains excluded.
+- [x] No categoryStage/CATEGORY_STAGE selection is required in current Gradle, IDE, Docker or deployment workflows.
+- [x] No runtime flag can restore legacy HTTP replay service; historical data and required shared readers remain preserved.
+- [x] Flyway history/checksums, Hibernate validate, security, normal idempotency and Widget/API contracts remain intact.
+- [x] Fresh install, populated upgrade, already-final startup, failed transition/retry and synthetic backup/application recovery checks pass. Actual-backup restoration was unnecessary for the no-transition local route and is not claimed.
+- [x] No failures caused by this plan remain; no unapproved data cleanup, frontend work, infrastructure or guide changes occurred.
 
 ### API Validation
 
 No new endpoint or normal response contract is planned. Preserve and regress existing final 410 behavior, auth/CSRF/error precedence and normal OpenAPI inventory/schemas/Swagger rendering. Endpoint-addition checklist items are not applicable unless a reviewed scope change introduces one.
 
-## Unknowns and Decisions Required
+## Remaining Operational Limits
 
-- Actual DB names/versions/checksums, deployed artifacts, writer count, replay deadlines, frontend readiness and backup capability are unverified. No DB connections were made while writing this plan.
-- The user confirmed local Compose and Render PostgreSQL are active, then excluded Render checks. No decommissioning or Render readiness is inferred. Local writer and recovery choices remain to be confirmed.
-- Real V16 mappings, protected backup locations, maintenance timing, downtime limits and per-environment operational authorizations must be resolved before execution.
-- Restoring a populated older backup can require another staged replay window. Preserve that recovery route even though active bridge support ends.
-- If a protected restore, Docker execution or IDE validation cannot be performed, document why and the strongest alternative; do not label the corresponding operational claim verified from unrelated fixtures.
+- Actual local V18 history, checksums, read compatibility, retention and writer inventory were verified on 2026-09-22. No local schema transition or real-data backup/export was needed or performed.
+- Render remains excluded, active and unverified. A future remote release needs its own admission and operational authorization; local results do not certify it.
+- Synthetic pg_dump/pg_restore and application startup passed. Real protected-backup recovery was not attempted and must be verified before a future destructive restore.
+- Restoring a populated older backup can require another staged replay window. Preserve that isolated recovery route even though current releases cannot serve bridge mode.
+- IDE UI and a deployed frontend were not driven. No-stage compilation/direct Java startup/bootRun and an actual isolated Swagger browser workflow provide the documented alternative evidence. Production OIDC login and frontend deployment are outside scope.
 
 ## Completion
 
-Keep proposed until explicit approval, then active during execution. Mark completed only after all applicable session and final checks pass and the local/repository goal is achieved. Retain active status while mandatory local gates remain pending. Render operations are explicitly excluded and must remain reported as unperformed even when this local plan completes. Append this plan to the completed-plan README only on completion. No implementation, environment changes, migration, backup/export or deployment was performed as part of this proposal.
+Completed on 2026-09-22 after the applicable local/repository checks passed. Execution used the already-V18 route and preserved real data. Render operations remain explicitly unperformed. Detailed evidence, alternative IDE verification and recovery limitations are retained in [the completion report](../reviews/plan0014/completion.md).

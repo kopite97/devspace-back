@@ -2,11 +2,11 @@ package com.kopite.devspace.compatibility.infrastructure;
 import com.kopite.devspace.compatibility.application.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
 import tools.jackson.databind.json.JsonMapper;
 import java.util.*;
 
-@Repository @RequiredArgsConstructor
+/** Historical bridge fixture, excluded from application artifacts and component scanning. */
+@RequiredArgsConstructor
 public class LegacyReplayAdapter implements LegacyReplayStore {
     private final JdbcTemplate jdbc;
     private final JsonMapper json;

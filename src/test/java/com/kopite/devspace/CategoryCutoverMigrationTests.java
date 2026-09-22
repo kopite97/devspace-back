@@ -155,4 +155,37 @@ class CategoryCutoverMigrationTests {
         assertEquals("0",scalar("select count(*) from projects"));assertEquals("0",scalar("select count(*) from project_categories"));
         assertEquals("0",scalar("select count(*) from dashboards"));assertEquals("0",scalar("select count(*) from links"));
     }
+
+    @Test void expiredReplayCleanupCannotBypassDurableRetirementDeadline() throws Exception {
+        seed(14,true);
+        flyway(16,json.writeValueAsString(manifest())).migrate();
+        for (String resource : List.of("project","task","journal","milestone","link"))
+            sql("delete from "+resource+"_create_idempotency where expires_at < now()");
+        var before=snapshot();
+        assertThrows(Exception.class,()->flyway(17,null).migrate());
+        assertEquals(before,snapshot());
+        assertEquals("16",scalar("select max(version::int) from flyway_schema_history where success"));
+    }
+
+    @Test void committedV17SurvivesV18FailureAndUnchangedMigrationCanRetry() throws Exception {
+        seed(14,true);
+        flyway(16,json.writeValueAsString(manifest())).migrate();
+        // Synthetic fixture only: represent an already elapsed replay window.
+        sql("update category_cutover_state set cutover_at=now()-interval '2 days',retire_after=now()-interval '1 day'");
+        String good=scalar("select widgets::text from dashboards");
+        sql("update dashboards set widgets=jsonb_set(widgets,'{0,type}','\"unsupported\"'::jsonb)");
+        var before=snapshot();
+        assertThrows(Exception.class,()->flyway(18,null).migrate());
+        assertEquals("17",scalar("select max(version::int) from flyway_schema_history where success"));
+        assertEquals("0",scalar("select count(*) from information_schema.tables where table_schema=current_schema() and table_name='widgets'"));
+        for (String resource : List.of("project","task","journal","milestone","link"))
+            assertEquals(before.get(resource+"_create_idempotency"),snapshot().get(resource+"_create_idempotency"));
+        sql("update dashboards set widgets=?::jsonb",good);
+        assertEquals(1,flyway(18,null).migrate().migrationsExecuted);
+        assertEquals(0,flyway(18,null).migrate().migrationsExecuted);
+        flyway(18,null).validate();
+        assertEquals("2",scalar("select count(*) from widgets"));
+        assertEquals("2",scalar("select count(*) from dashboard_widget_placements"));
+        assertEquals("2",scalar("select count(*) from legacy_widget_mapping"));
+    }
 }

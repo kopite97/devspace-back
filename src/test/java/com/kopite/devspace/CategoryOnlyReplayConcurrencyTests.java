@@ -19,7 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.file.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest @ActiveProfiles("test") @Import(TestcontainersConfiguration.class)
+@SpringBootTest @ActiveProfiles("test") @Import({TestcontainersConfiguration.class,LegacyReplayService.class,
+    com.kopite.devspace.compatibility.infrastructure.LegacyReplayAdapter.class})
 class CategoryOnlyReplayConcurrencyTests {
     @Autowired ProjectCommandService projects; @Autowired LegacyReplayService legacy;
     @Autowired UserWorkspaceCreationService users; @Autowired PersonalWorkspaceRepository workspaces;
