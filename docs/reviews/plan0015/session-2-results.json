@@ -1,0 +1,27 @@
+{
+  "migration": "V19",
+  "result": "passed",
+  "suites": [
+    {
+      "name": "DocumentPersistenceTests",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "DocumentMigrationTests",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "JournalCommandTests",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ]
+}

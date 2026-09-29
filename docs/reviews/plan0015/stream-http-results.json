@@ -1,0 +1,17 @@
+{
+  "mode": "streams",
+  "result": "PASS",
+  "calls": [
+    {
+      "wireExcessStatus": 503,
+      "note": "Docker Desktop may buffer an entire 10 MiB response; controlled file-read tests establish the active-stream bound"
+    },
+    {
+      "slowClients": 16,
+      "afterAbortReadable": true,
+      "afterDelayReadable": true
+    }
+  ],
+  "attachedId": "8bb26a05-c597-46d1-a669-85f19d787973",
+  "bytes": 10485760
+}

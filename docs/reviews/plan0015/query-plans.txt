@@ -1,0 +1,55 @@
+BEGIN
+INSERT 0 1000
+INSERT 0 1000
+ANALYZE
+ANALYZE
+                                                                    QUERY PLAN                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=8.57..10.72 rows=21 width=77) (actual time=0.017..0.067 rows=21 loops=1)
+   Buffers: shared hit=25
+   InitPlan 1 (returns $0)
+     ->  Index Scan using documents_pkey on documents documents_1  (cost=0.28..8.29 rows=1 width=16) (actual time=0.007..0.007 rows=1 loops=1)
+           Index Cond: (id = 'f8a44cad-4c9b-41f6-8b4c-182c8af1758d'::uuid)
+           Buffers: shared hit=3
+   ->  Index Scan using ix_documents_space_created on documents  (cost=0.28..102.79 rows=1001 width=77) (actual time=0.016..0.064 rows=21 loops=1)
+         Index Cond: (document_space_id = $0)
+         Buffers: shared hit=25
+ Planning:
+   Buffers: shared hit=59
+ Planning Time: 0.163 ms
+ Execution Time: 0.083 ms
+(13 rows)
+
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.28..15.86 rows=100 width=24) (actual time=0.023..0.111 rows=100 loops=1)
+   Buffers: shared hit=102
+   ->  Nested Loop Anti Join  (cost=0.28..155.79 rows=998 width=24) (actual time=0.022..0.105 rows=100 loops=1)
+         Join Filter: (j.attachment_id = a.id)
+         Buffers: shared hit=102
+         ->  Index Only Scan using ix_attachments_temp_updated on attachments a  (cost=0.28..124.76 rows=1000 width=24) (actual time=0.017..0.087 rows=100 loops=1)
+               Index Cond: (updated_at < (now() - '24:00:00'::interval))
+               Heap Fetches: 100
+               Buffers: shared hit=101
+         ->  Materialize  (cost=0.00..1.03 rows=2 width=16) (actual time=0.000..0.000 rows=0 loops=100)
+               Buffers: shared hit=1
+               ->  Seq Scan on attachment_object_deletions j  (cost=0.00..1.02 rows=2 width=16) (actual time=0.004..0.004 rows=0 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=99
+ Planning Time: 0.307 ms
+ Execution Time: 0.127 ms
+(17 rows)
+
+                                                                 QUERY PLAN                                                                  
+---------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using ix_attachments_document_status on attachments  (cost=0.28..8.29 rows=1 width=88) (actual time=0.004..0.005 rows=1 loops=1)
+   Index Cond: (document_id = 'f8a44cad-4c9b-41f6-8b4c-182c8af1758d'::uuid)
+   Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.070 ms
+ Execution Time: 0.009 ms
+(7 rows)
+
+ROLLBACK

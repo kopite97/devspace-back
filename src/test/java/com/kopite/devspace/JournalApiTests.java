@@ -166,7 +166,7 @@ class JournalApiTests {
     @Test
     void threeKeyPaginationDatesLiteralSearchAndCursorBinding() throws Exception {
         var owner=owner(); String project=project(owner);
-        for(int i=0;i<7;i++) jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Tied','Body %_! Needle',?::date,?::timestamptz,?::timestamptz)",
+        for(int i=0;i<7;i++) JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Tied','Body %_! Needle',?::date,?::timestamptz,?::timestamptz)",
             UUID.randomUUID(),owner.workspace(),UUID.fromString(project),i<3?"2024-02-29":"2024-03-01",i%2==0?"2026-01-01T00:00:00Z":"2025-01-01T00:00:00Z","2026-01-01T00:00:00Z");
         List<String> newest=new ArrayList<>();
         for(String sort:List.of("newest","oldest")) {

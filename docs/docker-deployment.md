@@ -75,7 +75,7 @@ Google OAuth 콘솔에도 `OIDC_GOOGLE_REDIRECT_URI`와 정확히 같은 승인�
 
 새 DB는 기동 시 Flyway로 스키마가 생성된다. 기존 로컬 데이터는 자동 복사되지 않는다.
 This source unconditionally produces final-schema artifacts; no stage build argument is used.
-The build includes V1-V18 but does not execute migrations. Startup still requires
+The build includes V1-V21 but does not execute migrations. Startup still requires
 the reviewed V16 manifest where applicable and V17 replay-drain prerequisites. Follow the
 [rollout procedure](project-category-only-rollout.md) before starting an image against an existing database.
 For a database still in the bridge window, use the preserved pre-Widget artifact/source, not this image.
@@ -117,3 +117,7 @@ Render 무료 PostgreSQL은 생성 30일 후 만료되어 접근할 수 없고,
 - [Health checks](https://render.com/docs/health-checks)
 - [PostgreSQL 연결](https://render.com/docs/postgresql-creating-connecting)
 - [무료 서비스 제한](https://render.com/docs/free)
+
+## Document attachment storage
+
+Set `FILE_STORAGE_ROOT` to a provisioned persistent directory and mount it with write access for UID/GID 10001. A regular `.devspace-document-storage` marker containing `devspace-document-storage-v1` is required. See [storage provisioning and recovery](operations/document-storage.md) for named volumes, bind mounts, backup/restore and delayed cleanup semantics. An ephemeral service filesystem is insufficient for document attachments.

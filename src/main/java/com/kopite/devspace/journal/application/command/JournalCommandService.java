@@ -22,12 +22,14 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class JournalCommandService {
+    private final com.kopite.devspace.document.application.DocumentDeletionService documentDeletion;
     private final CurrentUserService currentUser;
     private final PersonalWorkspaceRepository workspaces;
     private final ProjectRepository projects;
     private final JournalRepository journals;
     private final JournalCreateReplayStore replays;
     private final Clock projectClock;
+    private final com.kopite.devspace.documentspace.domain.DocumentSpaceRepository documentSpaces;
 
     @Transactional
     public JournalSnapshot create(UUID userId,String key,CreateJournalCommand command) {
@@ -50,7 +52,10 @@ public class JournalCommandService {
         }
         requireActive(project);
         replays.removeExpired(workspace.getId(),now);
-        Journal journal=journals.save(Journal.create(workspace.getId(),values,now));
+        var space=com.kopite.devspace.documentspace.domain.DocumentSpace.create(now);
+        documentSpaces.insert(space);
+        documentSpaces.flush();
+        Journal journal=journals.save(Journal.create(workspace.getId(),space.getId(),values,now));
         workspace.recordBusinessMutation();
         var result=JournalSnapshot.from(journal,project).observed(workspace.getDataRevision());
         replays.save(workspace.getId(),key,hash,result,now);
@@ -73,7 +78,11 @@ public class JournalCommandService {
         var workspace=lockWorkspace(userId);
         var journal=lockJournal(workspace.getId(),id,null);
         journal.checkRevision(revision);
+        var space=documentSpaces.find(journal.getDocumentSpaceId(),true).orElseThrow(JournalNotFoundException::new);
+        documentDeletion.deleteSpaceChildren(space.getId());
         journals.delete(journal);
+        journals.flush();
+        documentSpaces.delete(space);
         workspace.recordBusinessMutation();
         return id;
     }

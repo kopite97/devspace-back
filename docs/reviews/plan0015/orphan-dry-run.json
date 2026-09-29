@@ -1,0 +1,20 @@
+{
+  "mode": "dry-run",
+  "protectedFiles": 1,
+  "candidates": [
+    {
+      "key": "documents/ffffffff-ffff-4fff-8fff-ffffffffffff/.ffffffff-ffff-4fff-8fff-ffffffffffff.txt.claim",
+      "kind": "abandonedClaim"
+    },
+    {
+      "key": "documents/ffffffff-ffff-4fff-8fff-ffffffffffff/ffffffff-ffff-4fff-8fff-ffffffffffff.txt",
+      "kind": "unreferencedFinal"
+    },
+    {
+      "key": "staging/orphan.part",
+      "kind": "abandonedStaging"
+    }
+  ],
+  "missingReferencedKeys": [],
+  "rejectedPaths": []
+}

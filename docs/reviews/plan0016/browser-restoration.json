@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "restored": 100,
+  "allEightFields": true,
+  "allFilesReadable": true,
+  "reloadDiscardedRegistry": true,
+  "additionalTempExcluded": true,
+  "defaultFileMaxAccepted": 10485760,
+  "fileOversizeRejected": true,
+  "swaggerRendered": true,
+  "deletedIdRequired": true,
+  "detachAndDelete": true
+}

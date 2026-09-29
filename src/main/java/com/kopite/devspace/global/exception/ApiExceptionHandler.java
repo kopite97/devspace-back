@@ -22,6 +22,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge(){return error(413,"PAYLOAD_TOO_LARGE","Upload exceeds the configured limit",Map.of());}
+    @ExceptionHandler({org.springframework.web.multipart.MultipartException.class,org.springframework.web.multipart.support.MissingServletRequestPartException.class})
+    ResponseEntity<ApiError> invalidUpload(){return error(400,"VALIDATION_ERROR","Invalid multipart upload",Map.of());}
+    @ExceptionHandler(com.kopite.devspace.document.domain.DocumentException.class)
+    ResponseEntity<ApiError> document(com.kopite.devspace.document.domain.DocumentException ex) {
+        int status=switch(ex.code()){case "RESOURCE_NOT_FOUND"->404;case "REVISION_CONFLICT","ATTACHMENT_IN_USE","ATTACHMENT_DELETION_PENDING"->409;case "PAYLOAD_TOO_LARGE"->413;case "STORAGE_UNAVAILABLE"->503;default->400;};
+        return error(status,ex.code(),"Document request could not be completed",ex.field()==null?Map.of():Map.of(ex.field(),"Invalid, missing or unsupported value"));
+    }
     @ExceptionHandler(com.kopite.devspace.widget.domain.WidgetException.class)
     ResponseEntity<ApiError> widget(com.kopite.devspace.widget.domain.WidgetException ex) {
         int status=switch(ex.code()){case "RESOURCE_NOT_FOUND"->404;case "REVISION_CONFLICT","WIDGET_IN_USE","IDEMPOTENCY_KEY_REUSED"->409;default->400;};
@@ -124,6 +133,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiError> unreadable(HttpMessageNotReadableException exception) {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if(cause instanceof com.kopite.devspace.document.domain.DocumentException validation)return document(validation);
             if(cause instanceof com.kopite.devspace.projectcategory.domain.CategoryValidationException validation) return categoryInvalid(validation);
             if(cause instanceof com.kopite.devspace.dashboard.presentation.dto.UnsupportedDashboardSchemaException) return dashboardSchema();
             if(cause instanceof com.kopite.devspace.dashboard.domain.DashboardValidationException validation) return dashboardInvalid(validation);
@@ -161,6 +171,13 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     ResponseEntity<ApiError> mediaType() { return error(415, "UNSUPPORTED_MEDIA_TYPE", "Content type is not supported", Map.of()); }
+
+    @ExceptionHandler(com.kopite.devspace.document.domain.DocumentIntegrityException.class)
+    ResponseEntity<ApiError> documentIntegrity(com.kopite.devspace.document.domain.DocumentIntegrityException ex) {
+        var body=ApiError.of("INTERNAL_ERROR","Request could not be completed",Map.of());
+        org.slf4j.LoggerFactory.getLogger(ApiExceptionHandler.class).error("Document integrity failure; requestId={}, documentId={}, reason={}",body.requestId(),ex.documentId(),ex.getMessage());
+        return ResponseEntity.status(500).cacheControl(CacheControl.noStore()).body(body);
+    }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> unexpected() { return error(500, "INTERNAL_ERROR", "Request could not be completed", Map.of()); }

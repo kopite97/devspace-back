@@ -22,6 +22,15 @@ import java.util.List;
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
+    @Bean
+    org.springframework.test.context.DynamicPropertyRegistrar documentStorage() throws IOException {
+        var root = java.nio.file.Files.createTempDirectory("devspace-test-storage-");
+        java.nio.file.Files.writeString(root.resolve(".devspace-document-storage"), "devspace-document-storage-v1");
+        return registry -> {
+            registry.add("app.storage.root", root::toString);
+            registry.add("app.attachment.cleanup.enabled", () -> false);
+        };
+    }
 
     @Bean
     @ServiceConnection

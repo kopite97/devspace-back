@@ -17,6 +17,11 @@ spring:
             user-name-attribute: sub
 
 app:
+  security:
+    origin: http://localhost:8080
+  attachment:
+    cleanup:
+      enabled: false
   project:
     cursor-signing-key: test-only-project-cursor-signing-key-at-least-32-bytes
 

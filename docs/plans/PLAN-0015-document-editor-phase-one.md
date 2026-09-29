@@ -1,13 +1,15 @@
 # PLAN-0015: Document Editor Phase One
 
-Status: `proposed`
+Status: `completed`
+
+Follow-up: approved [PLAN-0016](PLAN-0016-document-attachment-registry-restoration.md) supplements attachment metadata, errors and OpenAPI. This document records phase-one completion.
 Date: 2026-09-22
 
 ## Goal
 
 Journal이 독점 소유하는 범용 DocumentSpace 안에서 Document를 작성·조회·저장·게시하고, LocalFileStorage에 저장한 첨부파일을 안전하게 연결·제거하는 1차 Backend 기능을 제공한다. BlockNote JSON은 해석하지 않고 PostgreSQL JSONB로 보존하며, 인증·인가와 Journal의 기존 동작을 유지한다.
 
-이 문서는 [Runtime Template](PLAN-TEMPLATE-RUNTIME.md)에 따른 **구현 제안**이다. 현재 작업은 PLAN 작성까지만이며 구현, Migration 실행, 의존성 설치, 서비스 기동 및 환경 변경을 포함하지 않는다. 사용자 명시적 승인 전에는 `active`로 변경하거나 Session을 실행하지 않는다.
+이 문서는 [Runtime Template](PLAN-TEMPLATE-RUNTIME.md)에 따른 구현 계획이다. 2026-09-23 사용자가 PLAN을 최종 Source of Truth로 지정해 요구사항 문서 동기화를 승인한 뒤 PLAN 실행을 명시적으로 승인했다. 세션 순서대로 구현·격리 검증을 진행하며 필수 검증이 끝난 항목만 완료 처리한다. 실제 기존 DB의 Migration과 운영 배포는 실행 범위에 포함하지 않는다.
 
 ## Scope
 
@@ -18,14 +20,14 @@ Journal이 독점 소유하는 범용 DocumentSpace 안에서 Document를 작성
 - SeaweedFS/S3-compatible Storage 연동은 제외한다. 추후 별도 검증 및 후속 PLAN에서 `S3FileStorage`를 추가할 수 있는 FileStorage 경계만 유지하며 구현체·설정·의존성·테스트를 미리 추가하지 않는다.
 - Project/Milestone/Resource와 DocumentSpace 연결, Custom Block, GitHub/Server/Kubernetes API Block, 실시간 공동 편집, WebSocket Sync, Comment/Discussion, Mention, Template, Revision/History, Relation, Share Link, AI, Elasticsearch/OpenSearch는 제외한다. 이를 위한 Entity/Table/Service/API도 선행 추가하지 않는다.
 - 기존 Journal의 body, 검색, Project 관계, revision, 생성 replay, Hard Delete 정책을 보존한다. Journal body를 Document로 자동 변환하거나 두 본문을 동기화하지 않는다.
-- 현재 Working Tree의 기존 변경은 이 PLAN의 구현 실적으로 간주하지 않는다. 이번 수정에서는 이 PLAN 파일만 변경하며 요구사항·ADR·가이드·완료 PLAN 인덱스는 수정하지 않는다.
+- 실행 시작 시 Working Tree의 두 요구사항 문서 변경은 앞선 사용자 승인에 따른 계약 동기화다. 이 변경을 보존하며 런타임 구현 실적으로 간주하지 않는다. 승인된 PLAN 실행에 필요한 코드·테스트·실행 기록·ADR을 변경하고 공통 Agent Guide는 변경하지 않는다.
 
 ## Repository Review
 
 ### 확인한 지침과 선례
 
 - [루트 AGENTS](../../AGENTS.md), [Plan Guide](AGENTS.md), [Implementation Guide](../agents/IMPLEMENTATION/AGENTS.md), [Decision Guide](../decisions/AGENTS.md)를 확인했다. 추가 경로별 AGENTS는 현재 저장소에서 발견되지 않았다.
-- [Backend Requirements](../requirements/DOCUMENT_EDITOR_BACKEND_REQUIREMENTS.md)와 [Common Contract](../requirements/DOCUMENT_EDITOR_COMMON_CONTRACT.md)를 기준으로 한다. Storage 구현체는 이번 사용자의 LocalFileStorage 변경 지시를 우선한다. 두 문서의 기존 Storage 제품 선택은 이번 PLAN의 구현 전제가 아니며 Domain/API 계약은 유지한다. 아래 차이·명확화 항목이 원문에 반영되었다고 가정하거나 요구사항 파일을 이번 작업에서 수정하지 않는다.
+- [Backend Requirements](../requirements/DOCUMENT_EDITOR_BACKEND_REQUIREMENTS.md)와 [Common Contract](../requirements/DOCUMENT_EDITOR_COMMON_CONTRACT.md)는 사용자 승인에 따라 이 PLAN의 LocalFileStorage·UUID·API·성공 응답 및 지연 정리 계약으로 먼저 동기화했다. 승인된 PLAN을 최종 Source of Truth로 삼아 구현했다.
 - [Architecture](../agents/ARCHITECTURE.md), [Spring Boot](../agents/SPRING_BOOT.md), [API](../agents/API.md), [Database](../agents/DATABASE.md), [Flyway](../agents/FLYWAY.md), [Security](../agents/SECURITY.md), [Application](../agents/IMPLEMENTATION/APPLICATION.md), [Domain](../agents/IMPLEMENTATION/DOMAIN.md), [Ports and Adapters](../agents/IMPLEMENTATION/PORTS_ADAPTERS.md), [Design Principles](../agents/IMPLEMENTATION/DESIGN_PRINCIPLES.md)를 적용한다. Storage 전용 가이드는 없으며 FileStorage는 Ports and Adapters의 명시적 예시다. `TEST.md`에는 현재 별도 지침이 없다.
 - 완료 선례: [PLAN-0006 Journal](PLAN-0006-journal-api.md)의 소유권·삭제·replay·PostgreSQL 테스트, [PLAN-0007 Milestone](PLAN-0007-milestone-api.md)의 상태 전이·Hard Delete, [PLAN-0008 Link](PLAN-0008-link-api.md)의 관계 변경·경쟁 검증, [PLAN-0009 Dashboard](PLAN-0009-dashboard-overview-api.md)의 JSONB·snapshot 조회, [PLAN-0013 Widget](PLAN-0013-independent-widget-refactoring.md)의 독립 Domain·JSONB·Migration·OpenAPI, [PLAN-0014](PLAN-0014-final-schema-and-bridge-retirement.md)의 최종 Schema 및 Artifact 검증을 참고한다. 과거 PLAN의 v1 URI보다 현재 Controller를 우선한다.
 - [DECISION-0001](../decisions/DECISION-0001-project-category.md)은 superseded다. [DECISION-0002](../decisions/DECISION-0002-project-category-only-classification.md)의 현행 v2/소유권/응답 계약과 [DECISION-0004](../decisions/DECISION-0004-independent-widget-and-dashboard-placement.md)의 독립 Domain·최종 Migration 패키징을 보존한다. [DECISION-0003](../decisions/DECISION-0003-revision-keyed-query-cache.md)의 연결 구현 PLAN은 rejected이며 Redis를 재도입하지 않는다.
@@ -64,11 +66,11 @@ Journal이 독점 소유하는 범용 DocumentSpace 안에서 Document를 작성
 | Revision/재시도 | 기존 Journal은 revision과 필수 Idempotency-Key가 있지만 새 Document 계약에는 없다. | Document에 revision/If-Match/필수 Idempotency-Key를 임의 추가하지 않는다. PUT은 전체 상태 저장, 같은 Document의 요청 직렬화가 전제다. 서로 다른 Client의 stale save는 마지막 commit이 이기며, 생성/Upload timeout 뒤 자동 재시도는 중복을 만들 수 있음을 계약에 명시한다. 기존 Journal replay는 유지한다. |
 | 게시 | Common §39는 Publish 이후에도 Save/첨부 제거를 수행한다. | PUBLISHED의 PUT을 허용하고 status/최초 publishedAt을 유지한다. Publish 재호출은 200의 동일 게시 상태, 추가 변경 없음. Unpublish API 및 Block 의미 기반 게시 검사는 없다. |
 | 제약/상태 코드 | 파일 종류·크기, JSON 크기, title 상한, 삭제 응답의 세부 값은 확정되지 않았다. | 아래 제한값 및 HTTP 표를 초기 Local 정책으로 제안한다. 빈 title/content 배열을 생성·저장·게시할 수 있으며 Journal의 nonblank 본문 규칙을 전용하지 않는다. |
-| 권한 경계 | FK 없는 범용 Space에서 현재 Journal 소유권을 확인해야 한다. | 아래 `DocumentSpaceAccess` 경계는 장기 의존 방향 결정이므로 **ADR 필요 후보**다. `PORTS_ADAPTERS.md`의 일반 내부 Service 포트 금지와 구분해 승인받는다. 미래 owner registry는 만들지 않는다. |
-| 삭제 복구 | DB와 로컬 파일시스템을 원자적으로 commit할 수 없다. | 아래 첨부 전용 durable deletion intent/claim 및 부모 삭제 후 재시도는 **ADR 필요 후보**다. 일반 Outbox/Event Bus/분산 Transaction을 도입하지 않는다. 부모 삭제 200은 DB 삭제와 정리 작업 영속화를 의미하며 장애 시 Binary 제거는 지연될 수 있다는 계약 확인이 필요하다. |
+| 권한 경계 | FK 없는 범용 Space에서 현재 Journal 소유권을 확인해야 한다. | `DocumentSpaceAccess`는 승인된 DECISION-0005에 따라 구현했다. 일반 내부 Service 포트와 구분되는 owner-neutral capability이며 미래 owner registry는 만들지 않는다. |
+| 삭제 복구 | DB와 로컬 파일시스템을 원자적으로 commit할 수 없다. | 첨부 전용 durable deletion intent/claim 및 재시도는 승인된 DECISION-0006에 따라 구현했다. 일반 Outbox/Event Bus/분산 Transaction은 도입하지 않는다. 부모 삭제 200은 DB 삭제와 정리 작업 영속화를 의미하며 장애 시 Binary 제거가 지연될 수 있음을 공통 계약에 명시했다. |
 | Local Storage | 사용자가 1차 구현체를 LocalFileStorage로 지정했다. 저장 Root/파일시스템 권한/영속 mount는 배치 환경마다 다르다. | 선택 자체를 다시 승인받지 않고 외부 Root 설정, 경로 안전성, 완성 파일 공개, Docker 재생성 후 파일 보존을 구현·검증 기준으로 고정한다. 구현 착수 승인은 별도다. |
 
-새 ADR이 필요하다고 확정되면 Decision Guide에 따라 각각 proposed로 제시하고 명시적 승인 후 채택한다. 이번 작업에서는 ADR을 생성하지 않는다. Agent Guide 변경은 별도 승인 대상이다. LocalFileStorage는 기존 Java 파일 I/O 기능으로 계획하며 새 Storage 라이브러리나 별도 Storage 서버를 추가하지 않는다. 영속 경로·권한·안전한 파일 공개 조건이 성립하지 않으면 해당 의존 Session을 차단 사유와 함께 미완료로 둔다.
+DECISION-0005와 DECISION-0006을 proposed로 제시한 뒤 2026-09-23 사용자의 명시적 승인을 받아 accepted로 채택했다. Agent Guide는 변경하지 않았다. LocalFileStorage는 기존 Java 파일 I/O로 구현했고 새 Storage 라이브러리나 별도 Storage 서버를 추가하지 않았다. 영속 경로·권한·원자적 파일 공개 조건을 Windows와 Linux의 실제 파일시스템에서 검증했다.
 
 ## Domain, Persistence and Journal Lifecycle
 
@@ -86,7 +88,7 @@ Attachment.documentId ──── N:1 ──> Document
 | Journal / journals | document_space_id UUID NOT NULL UNIQUE FK 추가. Journal이 Space를 생성·독점 소유·삭제한다. 기존 필드/응답은 유지한다. |
 | Document / documents | id UUID PK, document_space_id UUID NOT NULL FK, title NOT NULL, content JSONB NOT NULL, status DRAFT/PUBLISHED, author_id UUID NOT NULL, created_at/updated_at NOT NULL, published_at nullable. |
 | Attachment / attachments | id UUID PK, document_id UUID NOT NULL FK, original_filename, object_key UNIQUE, content_type, size positive, status TEMP/ATTACHED, created_by UUID, created_at/updated_at. 필수 Metadata는 NOT NULL. |
-| 첨부 삭제 작업 / attachment_object_deletions | Binary 정리에 필요한 objectKey, 대상 식별 정보, 작업 사유, 재시도/claim 정보를 보존하는 내부 운영 기록. 삭제된 부모에 대한 FK로 함께 사라지지 않는다. 사용자 Domain 또는 공개 상태를 추가하지 않는다. 승인 전 이름/세부 Schema를 확정된 구현으로 취급하지 않는다. |
+| 첨부 삭제 작업 / attachment_object_deletions | Binary 정리에 필요한 objectKey, 대상 식별 정보, 작업 사유, 재시도/claim 정보를 보존하는 내부 운영 기록. 삭제된 부모에 대한 FK로 함께 사라지지 않는다. 사용자 Domain 또는 공개 상태를 추가하지 않는다. 승인된 DECISION-0006에 따라 V21에 구현했다. |
 
 Document/DocumentSpace에 journalId, projectId, milestoneId, ownerType, ownerId를 두지 않는다. 추가 workspaceId로 상위 관계를 복제하지도 않는다. Document의 상위 관계는 documentSpaceId뿐이며 authorId는 작성자 Audit이다. authorId/createdBy는 인증 User로 채우고 접근 권한으로 사용하지 않는다. User FK와 audit 불변 조건은 기존 User 영구 삭제 정책을 먼저 확인해 restrictive 참조로 정한다.
 
@@ -108,7 +110,7 @@ Document/DocumentSpace에 journalId, projectId, milestoneId, ownerType, ownerId�
 
 ### 권한과 Transaction 경계 제안
 
-`documentspace.application`의 owner-neutral `DocumentSpaceAccess` capability를 Journal infrastructure adapter가 구현하는 안을 제안한다. 이는 위 ADR 승인 대상이다. 입력은 인증 User와 Space ID/필요 동작이며 결과는 내부 소유 Workspace/잠금 context다. Document/Space에는 Journal 타입·ID가 반환되지 않는다. 상위 소유권용 Journal/Project query는 Journal adapter에만 위치한다. 한 provider만 구현한다.
+`documentspace.application`의 owner-neutral `DocumentSpaceAccess` capability를 Journal infrastructure adapter가 구현한다. DECISION-0005로 승인한 경계다. 입력은 인증 User와 Space ID/필요 동작이며 결과는 내부 소유 Workspace/잠금 context다. Document/Space에는 Journal 타입·ID가 반환되지 않는다. 상위 소유권용 Journal/Project query는 Journal adapter에만 위치한다. 한 provider만 구현한다.
 
 - Journal 생성/목록 API는 먼저 Journal과 현재 Project의 소유권을 확인해 Space를 찾는다. Document detail은 필요한 id/spaceId projection을 찾은 뒤 이 경계로 권한을 확인한다. Attachment는 documentId → Space 권한을 사용한다. 검증 전 content/Binary를 읽거나 돌려주지 않는다.
 - archived Project 아래 기존 Journal의 Document 작성·편집·게시·삭제를 허용하는 안을 제안한다. 이는 Journal 편집 정책의 연장이며 Project에 DocumentSpace를 연결하는 기능이 아니다.
@@ -168,10 +170,10 @@ Bean Validation으로 표현되는 required/size/UUID 배열 제약은 DTO와 Sc
 | 401 AUTH_REQUIRED / 403 ACCOUNT_DISABLED 또는 CSRF_INVALID | 기존 Security 동작 유지; Origin 거부도 기존 공통 매핑 사용 |
 | 404 RESOURCE_NOT_FOUND | 없거나 접근 불가인 Journal/Document/Attachment. 다른 Document의 attachmentIds도 같은 거부 형태로 처리해 타인 존재를 노출하지 않음 |
 | 409 ATTACHMENT_IN_USE | ATTACHED 직접 삭제 |
-| 409 ATTACHMENT_DELETION_PENDING | 삭제 claim이 확정된 TEMP를 연결하거나 직접 삭제를 중복 요청한 경우; proposed 추가 code |
-| 413 PAYLOAD_TOO_LARGE | 파일·multipart·JSON 요청 크기 제한; Servlet/parser 단계도 공통 envelope로 매핑하는 proposed 추가 code |
+| 409 ATTACHMENT_DELETION_PENDING | 삭제 claim이 확정된 TEMP를 연결하거나 직접 삭제를 중복 요청한 경우; 승인된 추가 code |
+| 413 PAYLOAD_TOO_LARGE | 파일·multipart·JSON 요청 크기 제한; Servlet/parser 단계도 공통 envelope로 매핑하는 승인된 추가 code |
 | 415 UNSUPPORTED_MEDIA_TYPE | endpoint가 요구하는 JSON/multipart와 다른 HTTP request media type; 파일 allowlist 위반은 400 |
-| 503 STORAGE_UNAVAILABLE | Upload/Content/TEMP 직접 삭제의 Storage 실패; 파일시스템 경로·내부 오류를 노출하지 않는 proposed 추가 code |
+| 503 STORAGE_UNAVAILABLE | Upload/Content/TEMP 직접 삭제의 Storage 실패; 파일시스템 경로·내부 오류를 노출하지 않는 승인된 추가 code |
 | 500 INTERNAL_ERROR | 예상하지 못한 DB/내부 오류는 기존 공통 처리 |
 
 권한 검증은 상태 conflict보다 먼저 한다. 기존 workspace counter 한도 등의 오류는 기존 code를 유지한다. Content stream 전송 시작 후 장애는 JSON 오류로 바꿀 수 없으므로 연결 종료와 requestId 기반 내부 로그로 남긴다.
@@ -253,9 +255,13 @@ Document 삭제는 관련 모든 TEMP/ATTACHED objectKey의 삭제 작업을 DB 
 - Root 설정 변경은 기존 파일을 자동 이동시키지 않는다. 환경 이동/복구 시 writer와 cleanup을 정지하고 DB Metadata/삭제 작업 및 파일 Root를 함께 보존·복원한 뒤 논리 Key 대조, Content 조회, pending cleanup을 검증하는 절차를 기록한다. volume 삭제를 수반하는 정리 명령을 재기동 절차로 안내하지 않는다. Mini PC 운영 배포 자체는 범위 밖이다.
 - 예상 변경 책임: 신규 feature packages, Journal lifecycle/내부 FK, 신규 Flyway SQL, 공통 예외/OpenAPI의 필요한 부분, LocalFileStorage와 external properties, Docker mount 사용 문서/필요한 배치 설정, feature 및 파일시스템 통합 테스트. 새 Storage 서비스·클라이언트 의존성이나 관련 없는 기존 Service 리팩터링은 포함하지 않는다.
 
+2026-09-23: The user explicitly approved DECISION-0005 and DECISION-0006. Both are accepted; Session 1 gates are satisfied. The earlier proposal/gate descriptions below are retained as design history, not pending approvals.
+
 ## Execution Sessions
 
 Execute sessions in order. Do not start the next session until the current session's implementation and validation are complete. Check an item only after the corresponding work has actually been completed. Update this Plan as execution progresses.
+
+2026-09-23 Session 1 실행 기록: [계약·기준선·환경 사전검증](../reviews/plan0015/session-1.md). 두 요구사항 문서의 UUID/URI/Storage/삭제 계약 동기화와 실행 승인을 반영했다. 기존 Journal 16개 테스트 및 Windows/Linux volume/bind mount 파일시스템 사전검증이 통과했다. [DECISION-0005](../decisions/DECISION-0005-document-space-access.md)와 [DECISION-0006](../decisions/DECISION-0006-attachment-deletion-recovery.md)를 proposed로 제시한 뒤 사용자의 명시적 승인을 받아 accepted로 채택하고 후속 구현을 진행했다.
 
 사용자가 제시한 흐름을 9개 Session으로 조정한다. 상세 조회가 Attachment 관계에 의존하므로 신규 세 Domain의 Persistence를 먼저 준비한다. Journal FK/backfill/NOT NULL은 신규 생성·삭제 연결과 같은 Session에서 적용해 중간 단계의 기존 Journal writer를 깨뜨리지 않는다. Document 생성/조회로 부모를 확보한 뒤 Upload를 구현하고, Attachment가 준비된 후 PUT reconciliation/Publish를 완성한다. 삭제는 Storage 복구 기반이 준비된 뒤 묶는다. Security/Validation은 각 API Session부터 적용하며 마지막 Session으로 미루지 않는다. 중간 Session 완료는 전체 기능의 배포 가능 판정이 아니다.
 
@@ -267,16 +273,16 @@ Objective:
 
 Implementation:
 
-- [ ] 현재 Journal/code/Migration 상태를 재확인하고 URI·UUID·DTO·상태 코드·제한값·게시/삭제 의미를 요구사항/Common Contract와 대조한 승인 계약을 기록한다.
-- [ ] owner-neutral 권한 경계와 durable deletion claim/retry의 ADR 필요 여부를 확정하고, 필요 ADR을 proposed로 검토·승인받는다. Guide 변경을 자동 포함하지 않는다.
-- [ ] FileStorage 경계를 유지한 LocalFileStorage, 논리 Key와 물리 경로 분리, Root 초기화·경로/권한·원자적 파일 공개·Docker 영속 mount 및 오류 복구 기준을 고정한다. 새 Storage dependency는 추가하지 않는다.
-- [ ] V18 이후 가용 Migration 번호, 기존 Journal/backfill 규모, 격리 upgrade fixture 및 기존 replay 보존 검증 기준을 정한다.
+- [x] 현재 Journal/code/Migration 상태를 재확인하고 URI·UUID·DTO·상태 코드·제한값·게시/삭제 의미를 요구사항/Common Contract와 대조한 승인 계약을 기록한다.
+- [x] owner-neutral 권한 경계와 durable deletion claim/retry의 ADR 필요 여부를 확정하고, 필요 ADR을 proposed로 검토·승인받는다. Guide 변경을 자동 포함하지 않는다.
+- [x] FileStorage 경계를 유지한 LocalFileStorage, 논리 Key와 물리 경로 분리, Root 초기화·경로/권한·원자적 파일 공개·Docker 영속 mount 및 오류 복구 기준을 고정한다. 새 Storage dependency는 추가하지 않는다.
+- [x] V18 이후 가용 Migration 번호, 기존 Journal/backfill 규모, 격리 upgrade fixture 및 기존 replay 보존 검증 기준을 정한다. 실제 DB 규모 측정이 아닌 격리 fixture 범위이며 실행 기록에 구분한다.
 
 Validation:
 
-- [ ] 숫자 ID 예시/UUID, pagination, 삭제 200 의미 등 차이가 미해결 상태로 구현에 넘어가지 않는지 확인한다.
-- [ ] Diagram/import 책임에 Document/Space→Journal 직접 의존 또는 ownerType/ownerId가 없고 Journal 외 연결이 없는지 검토한다.
-- [ ] 실제 격리 파일 Root와 기존 PostgreSQL Testcontainers, Local host 및 Linux Application 컨테이너의 persistent volume/bind mount로 검증할 수 있는지 확인한다. Root 외부 접근 방지·권한·원자적 파일 공개 조건이 미해결이면 관련 후속 Session을 진행하지 않는다.
+- [x] 숫자 ID 예시/UUID, pagination, 삭제 200 의미 등 차이가 미해결 상태로 구현에 넘어가지 않는지 확인한다.
+- [x] Diagram/import 책임에 Document/Space→Journal 직접 의존 또는 ownerType/ownerId가 없고 Journal 외 연결이 없는지 검토한다.
+- [x] 실제 격리 파일 Root와 기존 PostgreSQL Testcontainers, Local host 및 Linux Application 컨테이너의 persistent volume/bind mount로 검증할 수 있는지 확인한다. Root 외부 접근 방지·권한·원자적 파일 공개 조건이 미해결이면 관련 후속 Session을 진행하지 않는다.
 
 ### Session 2: DocumentSpace/Document/Attachment Persistence
 
@@ -286,16 +292,18 @@ Objective:
 
 Implementation:
 
-- [ ] Space/Document/Attachment Domain·Repository·Persistence와 신규 Table Migration을 추가한다. Journal의 FK/backfill/NOT NULL은 Session 3에서 lifecycle 변경과 함께 적용한다.
-- [ ] Document→Space/Attachment→Document NOT NULL FK, 상태/JSON array 제약 및 query index를 추가한다. Attachment 테이블은 상세 응답의 ATTACHED IDs 조회에 사용하며 Upload는 Session 5에서 구현한다.
-- [ ] Clock/audit/UUID/JSONB mapping, Document DRAFT와 Attachment TEMP factory를 기존 패턴으로 구현한다. 기존 body를 Document로 변환하지 않는다.
+- [x] Space/Document/Attachment Domain·Repository·Persistence와 신규 Table Migration을 추가한다. Journal의 FK/backfill/NOT NULL은 Session 3에서 lifecycle 변경과 함께 적용한다.
+- [x] Document→Space/Attachment→Document NOT NULL FK, 상태/JSON array 제약 및 query index를 추가한다. Attachment 테이블은 상세 응답의 ATTACHED IDs 조회에 사용하며 Upload는 Session 5에서 구현한다.
+- [x] Clock/audit/UUID/JSONB mapping, Document DRAFT와 Attachment TEMP factory를 기존 패턴으로 구현한다. 기존 body를 Document로 변환하지 않는다.
 
 Validation:
 
-- [ ] 빈 DB 전체 Migration 및 populated V18 upgrade를 격리 PostgreSQL에서 수행하고 Flyway checksum/JPA validate를 확인한다.
-- [ ] 신규 FK/non-null/상태 제약 및 기존 Journal id/body/date/audit/revision/replay 불변을 검증한다. 현재 Journal 생성 경로는 계속 동작해야 한다.
-- [ ] flush/clear 후 빈 배열, 중첩/알 수 없는 Block, Unicode/숫자/배열 순서의 JSONB 의미상 왕복을 검증한다.
-- [ ] 잘못된 Document/Attachment FK·상태·JSON shape를 DB가 거부하고 신규 Migration 실패가 부분 Schema 변경을 남기지 않는지 확인한다.
+- [x] 빈 DB 전체 Migration 및 populated V18 upgrade를 격리 PostgreSQL에서 수행하고 Flyway checksum/JPA validate를 확인한다.
+- [x] 신규 FK/non-null/상태 제약 및 기존 Journal id/body/date/audit/revision/replay 불변을 검증한다. 현재 Journal 생성 경로는 계속 동작해야 한다.
+- [x] flush/clear 후 빈 배열, 중첩/알 수 없는 Block, Unicode/숫자/배열 순서의 JSONB 의미상 왕복을 검증한다.
+- [x] 잘못된 Document/Attachment FK·상태·JSON shape를 DB가 거부하고 신규 Migration 실패가 부분 Schema 변경을 남기지 않는지 확인한다.
+
+Evidence: [Session 2 results](../reviews/plan0015/session-2-results.json). PostgreSQL tests passed, including Hibernate validation, populated V18 preservation, historical replay, failed migration rollback/retry, JSONB and attachment constraints.
 
 ### Session 3: Journal Backfill, 생성·삭제 Lifecycle 및 공용 접근 경계
 
@@ -305,17 +313,19 @@ Objective:
 
 Implementation:
 
-- [ ] 신규 Migration으로 Journal 내부 scalar FK/backfill/NOT NULL/UNIQUE를 추가하는 것과 같은 Session에서 실제 생성 분기에 Space 생성을 연결한다. rollback/replay/counter 규칙과 기존 Journal fixture를 함께 맞춘다.
-- [ ] 승인된 DocumentSpaceAccess와 Journal adapter를 구현하고 조회·변경·maintenance context의 잠금 순서를 고정한다.
-- [ ] 기존 Journal DTO/검색/body/revision/archived 정책을 유지한다. 빈 Space의 Journal 삭제는 기존 Hard Delete와 함께 처리하고 첨부가 있는 삭제 완성은 Session 7에서 검증한다.
+- [x] 신규 Migration으로 Journal 내부 scalar FK/backfill/NOT NULL/UNIQUE를 추가하는 것과 같은 Session에서 실제 생성 분기에 Space 생성을 연결한다. rollback/replay/counter 규칙과 기존 Journal fixture를 함께 맞춘다.
+- [x] 승인된 DocumentSpaceAccess와 Journal adapter를 구현하고 조회·변경·maintenance context의 잠금 순서를 고정한다.
+- [x] 기존 Journal DTO/검색/body/revision/archived 정책을 유지한다. 빈 Space의 Journal 삭제는 기존 Hard Delete와 함께 처리하고 첨부가 있는 삭제 완성은 Session 7에서 검증한다.
 
 Validation:
 
-- [ ] 기존 Journal이 있는 직전 Schema 및 V18에서 최신까지 upgrade하고 Journal 수=연결 Space 수, non-null/unique/FK, 누락·고아 없음과 기존 audit/replay bytes 불변을 확인한다. 실패 시 부분 backfill이 남지 않아야 한다.
-- [ ] Journal+Space+replay atomic commit 및 flush/commit 실패 시 전체 rollback을 검증한다.
-- [ ] 동일 key 재처리, archive 후 replay, 삭제 후 replay에서 추가 Space/Journal이 생기지 않는지 확인한다.
-- [ ] 소유자/타인/없는 리소스, archived Project, disabled User 및 Journal 이동 경쟁의 접근 규칙을 검증한다.
-- [ ] 기존 Journal Persistence/Command/Query/API/OpenAPI 회귀를 실행하고 Document 패키지에 Journal import/SQL이 없는지 확인한다.
+- [x] 기존 Journal이 있는 직전 Schema 및 V18에서 최신까지 upgrade하고 Journal 수=연결 Space 수, non-null/unique/FK, 누락·고아 없음과 기존 audit/replay bytes 불변을 확인한다. 실패 시 부분 backfill이 남지 않아야 한다.
+- [x] Journal+Space+replay atomic commit 및 flush/commit 실패 시 전체 rollback을 검증한다.
+- [x] 동일 key 재처리, archive 후 replay, 삭제 후 replay에서 추가 Space/Journal이 생기지 않는지 확인한다.
+- [x] 소유자/타인/없는 리소스, archived Project, disabled User 및 Journal 이동 경쟁의 접근 규칙을 검증한다.
+- [x] 기존 Journal Persistence/Command/Query/API/OpenAPI 회귀를 실행하고 Document 패키지에 Journal import/SQL이 없는지 확인한다.
+
+Evidence: [Session 3 results](../reviews/plan0015/session-3-results.json). Backfill of 1,001 Journals, rollback/retry, original data and replay preservation, owner/archived/disabled/maintenance access, movement serialization and all Journal regression suites passed.
 
 ### Session 4: Journal Document 생성/목록 및 공용 상세 조회
 
@@ -325,16 +335,18 @@ Journal 맥락에서 DRAFT를 만들고 전역 documentId로 같은 내용을 �
 
 Implementation:
 
-- [ ] Journal nested POST/GET와 Document detail GET, 정확한 DTO/strict parser/Bean Validation/중앙 오류를 추가한다.
-- [ ] signed cursor, summary projection, 동일 snapshot의 count/page/권한 및 audit/counter 응답을 적용한다.
-- [ ] Session/CSRF/Origin을 적용하고 경로·예시·schema를 OpenAPI에 등록한다. PUT/Publish/삭제를 임시 성공 stub으로 노출하지 않는다.
+- [x] Journal nested POST/GET와 Document detail GET, 정확한 DTO/strict parser/Bean Validation/중앙 오류를 추가한다.
+- [x] signed cursor, summary projection, 동일 snapshot의 count/page/권한 및 audit/counter 응답을 적용한다.
+- [x] Session/CSRF/Origin을 적용하고 경로·예시·schema를 OpenAPI에 등록한다. PUT/Publish/삭제를 임시 성공 stub으로 노출하지 않는다.
 
 Validation:
 
-- [ ] Journal마다 별도 Space에 DRAFT 생성, 빈 title/content 허용, 전역 상세 동일 값과 서버 필드 위조 거부를 검증한다.
-- [ ] 두 사용자와 두 Journal의 격리, empty collection, 100개 초과 fixture의 여러 page/total/동일 timestamp 정렬 및 cursor Context 거부를 검증한다.
-- [ ] JSON 크기/깊이/타입/unknown top-level 및 malformed 입력, 인증/CSRF/Origin 오류를 실제 HTTP/MockMvc에서 확인한다.
-- [ ] 신규 3개 operation이 `/v3/api-docs`에 있고 global Document collection/Space CRUD가 없는지 확인한다.
+- [x] Journal마다 별도 Space에 DRAFT 생성, 빈 title/content 허용, 전역 상세 동일 값과 서버 필드 위조 거부를 검증한다.
+- [x] 두 사용자와 두 Journal의 격리, empty collection, 100개 초과 fixture의 여러 page/total/동일 timestamp 정렬 및 cursor Context 거부를 검증한다.
+- [x] JSON 크기/깊이/타입/unknown top-level 및 malformed 입력, 인증/CSRF/Origin 오류를 실제 HTTP/MockMvc에서 확인한다.
+- [x] 신규 3개 operation이 `/v3/api-docs`에 있고 global Document collection/Space CRUD가 없는지 확인한다.
+
+Evidence: [Session 4 results](../reviews/plan0015/session-4-results.json). Three real operations implemented; no PUT/publish/delete success stubs.
 
 ### Session 5: LocalFileStorage Upload와 보상 처리
 
@@ -344,17 +356,19 @@ Objective:
 
 Implementation:
 
-- [ ] FileStorage/LocalFileStorage와 삭제 작업 기록의 신규 Migration을 구현하고 Session 2의 Attachment Persistence에 연결한다. Root 외부 설정, 경로 안전성, staging/원자적 공개 및 Docker volume/bind mount 사용 문서를 추가한다.
-- [ ] multipart documentId/file 입력, 파일 validation, LocalFileStorage put, 부모 재검증, TEMP insert/commit 및 rollback 보상을 구현한다.
-- [ ] Upload DTO와 stable contentUrl/OpenAPI를 제공하고 파일 I/O 오류를 중앙 오류 계약으로 변환한다.
+- [x] FileStorage/LocalFileStorage와 삭제 작업 기록의 신규 Migration을 구현하고 Session 2의 Attachment Persistence에 연결한다. Root 외부 설정, 경로 안전성, staging/원자적 공개 및 Docker volume/bind mount 사용 문서를 추가한다.
+- [x] multipart documentId/file 입력, 파일 validation, LocalFileStorage put, 부모 재검증, TEMP insert/commit 및 rollback 보상을 구현한다.
+- [x] Upload DTO와 stable contentUrl/OpenAPI를 제공하고 파일 I/O 오류를 중앙 오류 계약으로 변환한다.
 
 Validation:
 
-- [ ] JUnit 임시 디렉터리 등 격리된 실제 파일 Root와 PostgreSQL Testcontainers로 Upload하고 파일 bytes/size, Metadata contentType/논리 Key, TEMP 상태를 비교한다. in-memory Storage mock만으로 통합 성공을 판정하지 않는다.
-- [ ] 빈 파일, 10 MiB 경계/초과, multipart 상한, MIME/extension/signature 불일치, SVG/HTML, filename path/CRLF, 반복 part 및 다른 사용자 Document를 거부한다.
-- [ ] 디스크 부족·권한 거부·read-only·기록 중단·atomic move 실패, 파일 공개 후 DB flush·commit rollback, 보상 실패, Upload 중 부모 삭제를 검증한다. 재현하기 어려운 파일 오류는 adapter의 제한된 fault injection으로 보완한다. commit 성공 후 응답/connection 유실과 결과 불명확 상태에서도 살아 있는 파일을 삭제하지 않는지 확인한다.
-- [ ] 절대경로/상위 경로/drive·UNC/구분자 변형/symlink·junction escape를 거부하고 Root 밖 파일이 읽히거나 바뀌지 않는지 검증한다. overwrite·부분 파일 노출·staging 조회도 거부한다.
-- [ ] 공개 응답과 DB objectKey에 Root/물리 경로가 없고 외부 설정만 바꿔 같은 Artifact로 서로 다른 격리 Root를 사용하는지 검증한다. Root 누락/잘못된 mount에서 fallback하지 않아야 한다.
+- [x] JUnit 임시 디렉터리 등 격리된 실제 파일 Root와 PostgreSQL Testcontainers로 Upload하고 파일 bytes/size, Metadata contentType/논리 Key, TEMP 상태를 비교한다. in-memory Storage mock만으로 통합 성공을 판정하지 않는다.
+- [x] 빈 파일, 10 MiB 경계/초과, multipart 상한, MIME/extension/signature 불일치, SVG/HTML, filename path/CRLF, 반복 part 및 다른 사용자 Document를 거부한다.
+- [x] 디스크 부족·권한 거부·read-only·기록 중단·atomic move 실패, 파일 공개 후 DB flush·commit rollback, 보상 실패, Upload 중 부모 삭제를 검증한다. 재현하기 어려운 파일 오류는 adapter의 제한된 fault injection으로 보완한다. commit 성공 후 응답/connection 유실과 결과 불명확 상태에서도 살아 있는 파일을 삭제하지 않는지 확인한다.
+- [x] 절대경로/상위 경로/drive·UNC/구분자 변형/symlink·junction escape를 거부하고 Root 밖 파일이 읽히거나 바뀌지 않는지 검증한다. overwrite·부분 파일 노출·staging 조회도 거부한다.
+- [x] 공개 응답과 DB objectKey에 Root/물리 경로가 없고 외부 설정만 바꿔 같은 Artifact로 서로 다른 격리 Root를 사용하는지 검증한다. Root 누락/잘못된 mount에서 fallback하지 않아야 한다.
+
+Session 5 evidence: real filesystem/PostgreSQL upload and compensation tests; [HTTP limits](../reviews/plan0015/upload-http-limits.json), [Linux fault probes](../reviews/plan0015/linux-storage-faults.json), [storage operations](../operations/document-storage.md).
 
 ### Session 6: Document PUT, Attachment Reconciliation 및 Publish
 
@@ -364,17 +378,19 @@ content와 attachmentIds 전체 상태를 원자적으로 저장하고 양방향
 
 Implementation:
 
-- [ ] PUT의 관계 Source of Truth, 전체 검증 후 TEMP↔ATTACHED 전이와 Document/audit/counter 단일 Transaction을 구현한다.
-- [ ] DocumentResponse의 ATTACHED IDs를 DB에서 계산하고 JSONB 내부 Block은 그대로 유지한다.
-- [ ] DRAFT/PUBLISHED 규칙과 Publish/반복 Publish, 게시 후 PUT을 구현한다. revision/history/Unpublish는 추가하지 않는다.
+- [x] PUT의 관계 Source of Truth, 전체 검증 후 TEMP↔ATTACHED 전이와 Document/audit/counter 단일 Transaction을 구현한다.
+- [x] DocumentResponse의 ATTACHED IDs를 DB에서 계산하고 JSONB 내부 Block은 그대로 유지한다.
+- [x] DRAFT/PUBLISHED 규칙과 Publish/반복 Publish, 게시 후 PUT을 구현한다. revision/history/Unpublish는 추가하지 않는다.
 
 Validation:
 
-- [ ] TEMP→ATTACHED→TEMP→ATTACHED, [] 전체 detach, 누락/중복/없는 ID/타 Document·타인 ID와 삭제 claim 충돌을 검증한다.
-- [ ] 잘못된 한 ID 및 중간 실패에서 content/title/audit/관계/counter 모두 rollback되는지 별도 Transaction으로 확인한다.
-- [ ] 변경 없는 ATTACHED/TEMP의 updatedAt 보존, detach 시 Grace 재시작 및 기존 오래된 createdAt 영향을 검증한다.
-- [ ] Publish 전/후 저장, 반복 Publish, publishedAt 최초값 보존, 요청 직렬화/경쟁 저장 시 DB·응답 관계 일관성을 검증한다.
-- [ ] JSON Block에 ID가 있어도 attachmentIds에 없으면 TEMP, JSON에 없어도 요청 ID가 유효하면 ATTACHED가 되어 Backend가 Block을 해석하지 않음을 확인한다.
+- [x] TEMP→ATTACHED→TEMP→ATTACHED, [] 전체 detach, 누락/중복/없는 ID/타 Document·타인 ID와 삭제 claim 충돌을 검증한다.
+- [x] 잘못된 한 ID 및 중간 실패에서 content/title/audit/관계/counter 모두 rollback되는지 별도 Transaction으로 확인한다.
+- [x] 변경 없는 ATTACHED/TEMP의 updatedAt 보존, detach 시 Grace 재시작 및 기존 오래된 createdAt 영향을 검증한다.
+- [x] Publish 전/후 저장, 반복 Publish, publishedAt 최초값 보존, 요청 직렬화/경쟁 저장 시 DB·응답 관계 일관성을 검증한다.
+- [x] JSON Block에 ID가 있어도 attachmentIds에 없으면 TEMP, JSON에 없어도 요청 ID가 유효하면 ATTACHED가 되어 Backend가 Block을 해석하지 않음을 확인한다.
+
+Session 6 evidence: DocumentMutationTests and AttachmentConcurrencyTests in the [final full suite](../reviews/plan0015/full-suite-results.json) cover reconciliation, audit, rollback, publication and lock races.
 
 ### Session 7: Content Streaming, 삭제 및 TEMP Cleanup
 
@@ -384,20 +400,22 @@ Objective:
 
 Implementation:
 
-- [ ] 권한 확인 후 Streaming, 안전한 response header/stream 종료/timeout을 구현한다.
-- [ ] TEMP 직접 삭제, ATTACHED 삭제 거부, 영속 claim 기반 bounded Scheduler/retry를 구현한다.
-- [ ] Document/Journal 삭제에 모든 objectKey 작업 확보와 DB Hard Delete를 연결하고 after-commit 정리·재시작 복구를 구현한다.
-- [ ] orphan dry-run/검토/회수 절차와 실패 로그·재시도 관측 방법을 문서화한다.
+- [x] 권한 확인 후 Streaming, 안전한 response header/stream 종료/timeout을 구현한다.
+- [x] TEMP 직접 삭제, ATTACHED 삭제 거부, 영속 claim 기반 bounded Scheduler/retry를 구현한다.
+- [x] Document/Journal 삭제에 모든 objectKey 작업 확보와 DB Hard Delete를 연결하고 after-commit 정리·재시작 복구를 구현한다.
+- [x] orphan dry-run/검토/회수 절차와 실패 로그·재시도 관측 방법을 문서화한다.
 
 Validation:
 
-- [ ] 소유 TEMP/ATTACHED content, 타인/없음/claim 후 content, 정확한 bytes/headers, 느린 응답/Client abort/stream 종료를 검증한다.
-- [ ] ATTACHED 직접 삭제 409, TEMP 즉시 삭제, cutoff 이전/동일/이후, batch 경계, Grace 중 재연결 및 두 worker의 중복 처리를 검증한다.
-- [ ] latch와 별도 Transaction으로 Save↔Cleanup, Save↔직접 삭제, Upload/생성↔Document/Journal 삭제의 양쪽 승리 순서를 반복 검증한다. 살아 있는 ATTACHED Object가 지워지면 실패다.
-- [ ] Document 삭제는 Space를 보존하고 Journal 삭제는 Space/모든 Document/Attachment를 제거하는지, 기존 Journal revision/replay/반복 404를 보존하는지 확인한다.
-- [ ] Object delete 실패, delete 성공 후 DB 실패, 부모 Transaction rollback, commit 직후 프로세스 종료/재기동에서 작업이 유실되지 않고 최종 정리되는지 실제 파일 Root와 PostgreSQL로 검증한다. 파일 부재는 성공, 권한/mount 오류는 재시도로 구분하고 Windows/Linux의 열린 stream 삭제 차이와 stream 종료 후 재시도를 확인한다.
-- [ ] 이미 Cleanup/직접 삭제 claim이 있는 Attachment의 부모 Hard Delete가 작업을 재사용하고, 진행 중 worker와 겹쳐도 부모 삭제를 막거나 key를 잃지 않는지 검증한다.
-- [ ] 보상 기록도 불가능한 최종 파일/staging orphan fixture를 만들고 writer 중지 확인 및 dry-run 대조가 살아 있는 파일이나 Root 밖 경로를 회수하지 않는지 검증한다.
+- [x] 소유 TEMP/ATTACHED content, 타인/없음/claim 후 content, 정확한 bytes/headers, 느린 응답/Client abort/stream 종료를 검증한다.
+- [x] ATTACHED 직접 삭제 409, TEMP 즉시 삭제, cutoff 이전/동일/이후, batch 경계, Grace 중 재연결 및 두 worker의 중복 처리를 검증한다.
+- [x] latch와 별도 Transaction으로 Save↔Cleanup, Save↔직접 삭제, Upload/생성↔Document/Journal 삭제의 양쪽 승리 순서를 반복 검증한다. 살아 있는 ATTACHED Object가 지워지면 실패다.
+- [x] Document 삭제는 Space를 보존하고 Journal 삭제는 Space/모든 Document/Attachment를 제거하는지, 기존 Journal revision/replay/반복 404를 보존하는지 확인한다.
+- [x] Object delete 실패, delete 성공 후 DB 실패, 부모 Transaction rollback, commit 직후 프로세스 종료/재기동에서 작업이 유실되지 않고 최종 정리되는지 실제 파일 Root와 PostgreSQL로 검증한다. 파일 부재는 성공, 권한/mount 오류는 재시도로 구분하고 Windows/Linux의 열린 stream 삭제 차이와 stream 종료 후 재시도를 확인한다.
+- [x] 이미 Cleanup/직접 삭제 claim이 있는 Attachment의 부모 Hard Delete가 작업을 재사용하고, 진행 중 worker와 겹쳐도 부모 삭제를 막거나 key를 잃지 않는지 검증한다.
+- [x] 보상 기록도 불가능한 최종 파일/staging orphan fixture를 만들고 writer 중지 확인 및 dry-run 대조가 살아 있는 파일이나 Root 밖 경로를 회수하지 않는지 검증한다.
+
+Session 7 evidence: AttachmentLifecycleTests, AttachmentCleanupBatchTests and AttachmentStreamingTests; [recovery](../reviews/plan0015/implementation-validation.md), [wire streaming](../reviews/plan0015/stream-http-results.json), and [orphan dry-run](../reviews/plan0015/orphan-dry-run.json).
 
 ### Session 8: Security, Validation, Error 및 OpenAPI 통합
 
@@ -407,17 +425,19 @@ Objective:
 
 Implementation:
 
-- [ ] 각 Session의 Security/Validation 결과를 종합하고 framework multipart/parser 예외까지 공통 Error에 맞춘다.
-- [ ] Request/Response/nullable fields/enums/UUID/opaque JSON/multipart/binary schemas, query/header/상태 코드/description을 정리한다.
-- [ ] 기존 공통 OpenAPI customizer·required field·response header 검사와 새로운 Content endpoint의 호환성을 맞춘다.
+- [x] 각 Session의 Security/Validation 결과를 종합하고 framework multipart/parser 예외까지 공통 Error에 맞춘다.
+- [x] Request/Response/nullable fields/enums/UUID/opaque JSON/multipart/binary schemas, query/header/상태 코드/description을 정리한다.
+- [x] 기존 공통 OpenAPI customizer·required field·response header 검사와 새로운 Content endpoint의 호환성을 맞춘다.
 
 Validation:
 
-- [ ] 9개 operation 각각에 적용되는 정상/401/403/404 및 해당 400/409/413/415/503 오류를 확인하고 타인 존재·물리 경로/Storage 정보를 노출하지 않는지 검증한다. 조회 API에 불필요한 mutation conflict를 요구하지 않는다.
-- [ ] Create/PUT/Upload의 writable field whitelist, 서버 필드 위조, Bean Validation Schema 반영, PUBLISHED 저장과 stable URL 계약을 검증한다.
-- [ ] `/v3/api-docs`의 method/path/status/schema를 승인된 Common Contract와 기계적으로 대조한다. 숫자 ID 예시가 UUID로 미해결인 채 통과시키지 않는다.
-- [ ] 기존 `src/test/browser` 방식을 확장해 Swagger UI의 Journal collection/Document detail/Attachment multipart·binary 렌더링과 try-it-out을 실제 Local HTTP에서 확인한다. Frontend 제품 코드는 구현하지 않는다.
-- [ ] development/test 익명 문서와 default/production 보호 정책, 기존 Journal 및 다른 API의 회귀를 확인한다.
+- [x] 9개 operation 각각에 적용되는 정상/401/403/404 및 해당 400/409/413/415/503 오류를 확인하고 타인 존재·물리 경로/Storage 정보를 노출하지 않는지 검증한다. 조회 API에 불필요한 mutation conflict를 요구하지 않는다.
+- [x] Create/PUT/Upload의 writable field whitelist, 서버 필드 위조, Bean Validation Schema 반영, PUBLISHED 저장과 stable URL 계약을 검증한다.
+- [x] `/v3/api-docs`의 method/path/status/schema를 승인된 Common Contract와 기계적으로 대조한다. 숫자 ID 예시가 UUID로 미해결인 채 통과시키지 않는다.
+- [x] 기존 `src/test/browser` 방식을 확장해 Swagger UI의 Journal collection/Document detail/Attachment multipart·binary 렌더링과 try-it-out을 실제 Local HTTP에서 확인한다. Frontend 제품 코드는 구현하지 않는다.
+- [x] development/test 익명 문서와 default/production 보호 정책, 기존 Journal 및 다른 API의 회귀를 확인한다.
+
+Session 8 evidence: all nine operations pass DocumentOpenApiTests/BackendOpenApiContractTests and [real Chrome Swagger/HTTP validation](../reviews/plan0015/browser-result.json).
 
 ### Session 9: Migration, 장애 복구 및 End-to-End 최종 검증
 
@@ -427,41 +447,43 @@ Local에서 전체 사용자 흐름과 기존 기능 보존을 재현하고 검�
 
 Implementation:
 
-- [ ] 격리 DB/파일 Root 및 Local Spring Boot용 실행 절차, 외부 설정 예시, Docker 영속 mount와 실행 계정 권한, API 계약과 정리/복원 절차를 마무리한다.
-- [ ] fresh/populated upgrade, 실제 Storage 연동, concurrency/failure, OpenAPI/browser 결과를 후속 검증 기록에 정리한다.
-- [ ] 전체 테스트/빌드 결과와 생성 Artifact의 새 Migration·config 포함을 확인하고 불필요한 test 전용 설정/자격증명이 포함되지 않게 한다.
+- [x] 격리 DB/파일 Root 및 Local Spring Boot용 실행 절차, 외부 설정 예시, Docker 영속 mount와 실행 계정 권한, API 계약과 정리/복원 절차를 마무리한다.
+- [x] fresh/populated upgrade, 실제 Storage 연동, concurrency/failure, OpenAPI/browser 결과를 후속 검증 기록에 정리한다.
+- [x] 전체 테스트/빌드 결과와 생성 Artifact의 새 Migration·config 포함을 확인하고 불필요한 test 전용 설정/자격증명이 포함되지 않게 한다.
 
 Validation:
 
-- [ ] Journal 조회→목록→DRAFT 생성→Upload TEMP→PUT ATTACHED→재조회 JSON/파일 복원→Publish→목록→상세→첨부 제거 PUT TEMP→Grace/Cleanup→Document 삭제→Journal 삭제를 실제 HTTP/DB/LocalFileStorage로 검증한다.
-- [ ] 생성된 파일/Metadata/Space 수를 각 단계에서 대조하고 정상 종료 및 fault/restart 후 고아·지워진 ATTACHED 파일·소유권 누수가 없는지 확인한다.
-- [ ] Application 컨테이너를 제거·재생성해도 같은 persistent volume 또는 bind mount와 DB로 첨부파일을 다시 조회하고 pending cleanup을 재개할 수 있는지 검증한다. 배치 문서에 제공하는 두 mount 방식과 non-root 권한을 확인하며 volume 데이터는 삭제하지 않는다.
-- [ ] 같은 Artifact의 Root 외부 설정 변경, Root/DB의 격리 복제·복원 후 동일 objectKey/contentUrl 동작, Root/표식 누락 시 오류를 검증한다. 설정 변경만으로 파일이 이동한다고 가정하지 않는다.
-- [ ] 대표 데이터의 list/content/delete/cleanup에 N+1·전체 Binary 메모리 적재·무제한 batch·Storage 대기 중 DB lock이 없는지 query plan/실행 관측으로 검증한다.
-- [ ] 기존 테스트 구조로 `./gradlew.bat test`와 `./gradlew.bat check bootJar`를 실행한다. Session별로 영향 테스트를 먼저 수행하고 이후 코드 변경/실패 근거 없이 전체 suite를 반복하지 않는다.
-- [ ] Docker/PostgreSQL 통합 환경 또는 실제 파일 Root/mount 검증 불가로 필수 테스트가 skip되면 완료로 처리하지 않는다. Local 검증 결과를 Mini PC 또는 외부 환경 배포 성공으로 확대하지 않는다.
+- [x] Journal 조회→목록→DRAFT 생성→Upload TEMP→PUT ATTACHED→재조회 JSON/파일 복원→Publish→목록→상세→첨부 제거 PUT TEMP→Grace/Cleanup→Document 삭제→Journal 삭제를 실제 HTTP/DB/LocalFileStorage로 검증한다.
+- [x] 생성된 파일/Metadata/Space 수를 각 단계에서 대조하고 정상 종료 및 fault/restart 후 고아·지워진 ATTACHED 파일·소유권 누수가 없는지 확인한다.
+- [x] Application 컨테이너를 제거·재생성해도 같은 persistent volume 또는 bind mount와 DB로 첨부파일을 다시 조회하고 pending cleanup을 재개할 수 있는지 검증한다. 배치 문서에 제공하는 두 mount 방식과 non-root 권한을 확인하며 volume 데이터는 삭제하지 않는다.
+- [x] 같은 Artifact의 Root 외부 설정 변경, Root/DB의 격리 복제·복원 후 동일 objectKey/contentUrl 동작, Root/표식 누락 시 오류를 검증한다. 설정 변경만으로 파일이 이동한다고 가정하지 않는다.
+- [x] 대표 데이터의 list/content/delete/cleanup에 N+1·전체 Binary 메모리 적재·무제한 batch·Storage 대기 중 DB lock이 없는지 query plan/실행 관측으로 검증한다.
+- [x] 기존 테스트 구조로 `./gradlew.bat test`와 `./gradlew.bat check bootJar`를 실행한다. Session별로 영향 테스트를 먼저 수행하고 이후 코드 변경/실패 근거 없이 전체 suite를 반복하지 않는다.
+- [x] Docker/PostgreSQL 통합 환경 또는 실제 파일 Root/mount 검증 불가로 필수 테스트가 skip되면 완료로 처리하지 않는다. Local 검증 결과를 Mini PC 또는 외부 환경 배포 성공으로 확대하지 않는다.
+
+Session 9 evidence: [full suite and build](../reviews/plan0015/full-suite-results.json), [artifact inspection](../reviews/plan0015/artifact.json), [named-volume recovery](../reviews/plan0015/named-volume-recovery.json), [bind/DB restore](../reviews/plan0015/bind-restore-recovery.json), and [query plans](../reviews/plan0015/query-plans.txt).
 
 ## Final Validation
 
-- [ ] DocumentSpace의 최소 모델/1:1/NOT NULL/기존 데이터 backfill, 신규 Journal 원자 생성과 역사적 replay를 검증했다.
-- [ ] Journal만 상위 연동되며 Document/Space에 Domain 전용 FK·polymorphic owner·직접 Journal 의존이 없다.
-- [ ] Document 생성/목록/상세/PUT/Publish/삭제, JSONB opaque round-trip과 권한·입력 제한을 검증했다.
-- [ ] attachmentIds는 API 관계 정보이며 DB 컬럼이나 Block 분석 결과가 아니다. TEMP↔ATTACHED와 잘못된 관계의 전체 rollback을 검증했다.
-- [ ] 실제 LocalFileStorage Upload/Content/Delete, Root 비공개/stable URL, ATTACHED 직접 삭제 거부, TEMP Cleanup 및 부모 삭제 복구를 검증했다.
-- [ ] Storage/DB partial failure와 process restart, Upload orphan의 명시적 복구 한계를 검증하고 기록했다.
-- [ ] 기존 Journal body/검색/revision/replay/Hard Delete/archived 동작과 기존 API/Migration 회귀가 통과했다.
-- [ ] Root 경계·link escape·부분 파일/overwrite 방지, 같은 Artifact의 Root 외부 설정 변경, Docker persistent volume/bind mount 재생성 후 보존·복원, 최종 test/check/bootJar와 격리 E2E가 통과했다.
-- [ ] No failures caused by this Plan remain.
-- [ ] All Execution Sessions are complete.
+- [x] DocumentSpace의 최소 모델/1:1/NOT NULL/기존 데이터 backfill, 신규 Journal 원자 생성과 역사적 replay를 검증했다.
+- [x] Journal만 상위 연동되며 Document/Space에 Domain 전용 FK·polymorphic owner·직접 Journal 의존이 없다.
+- [x] Document 생성/목록/상세/PUT/Publish/삭제, JSONB opaque round-trip과 권한·입력 제한을 검증했다.
+- [x] attachmentIds는 API 관계 정보이며 DB 컬럼이나 Block 분석 결과가 아니다. TEMP↔ATTACHED와 잘못된 관계의 전체 rollback을 검증했다.
+- [x] 실제 LocalFileStorage Upload/Content/Delete, Root 비공개/stable URL, ATTACHED 직접 삭제 거부, TEMP Cleanup 및 부모 삭제 복구를 검증했다.
+- [x] Storage/DB partial failure와 process restart, Upload orphan의 명시적 복구 한계를 검증하고 기록했다.
+- [x] 기존 Journal body/검색/revision/replay/Hard Delete/archived 동작과 기존 API/Migration 회귀가 통과했다.
+- [x] Root 경계·link escape·부분 파일/overwrite 방지, 같은 Artifact의 Root 외부 설정 변경, Docker persistent volume/bind mount 재생성 후 보존·복원, 최종 test/check/bootJar와 격리 E2E가 통과했다.
+- [x] No failures caused by this Plan remain.
+- [x] All Execution Sessions are complete.
 
 ### API Validation
 
-- [ ] Implemented endpoints are present in `/v3/api-docs`.
-- [ ] Request and response schemas match the approved `DOCUMENT_EDITOR_COMMON_CONTRACT.md`, including resolved UUID examples, pagination, opaque content, attachmentIds, required nullable publishedAt and upload DTO.
-- [ ] Bean Validation constraints are reflected where applicable; dynamic byte limits and business constraints are documented and tested separately.
-- [ ] HTTP methods and response status codes match the contract, including multipart/content responses and common error envelopes.
-- [ ] Swagger UI renders the implemented endpoints correctly using the repository's browser validation approach.
-- [ ] Journal Collection API와 documentId 기반 Detail API의 역할이 구분되고, 금지된 전역 Collection/DocumentSpace CRUD가 없다.
+- [x] Implemented endpoints are present in `/v3/api-docs`.
+- [x] Request and response schemas match the approved `DOCUMENT_EDITOR_COMMON_CONTRACT.md`, including resolved UUID examples, pagination, opaque content, attachmentIds, required nullable publishedAt and upload DTO.
+- [x] Bean Validation constraints are reflected where applicable; dynamic byte limits and business constraints are documented and tested separately.
+- [x] HTTP methods and response status codes match the contract, including multipart/content responses and common error envelopes.
+- [x] Swagger UI renders the implemented endpoints correctly using the repository's browser validation approach.
+- [x] Journal Collection API와 documentId 기반 Detail API의 역할이 구분되고, 금지된 전역 Collection/DocumentSpace CRUD가 없다.
 
 ## Planning Review
 
@@ -471,4 +493,4 @@ Validation:
 
 The Plan may be changed to `completed` only when every required session item and applicable validation item is checked, and no unresolved blocker prevents the Goal from being satisfied. If execution cannot continue, leave incomplete items unchecked and record the blocker before stopping.
 
-현재 상태는 **proposed**다. 사용자 지시에 따라 Storage 계획만 수정했으며 구현 착수 승인·구현·Migration·Runtime 테스트는 아직 수행하지 않았다. 작성만으로 완료 인덱스에 추가하거나 Session checkbox를 체크하지 않는다. 사용자의 명시적 승인 전 `active` 전환 및 구현 시작을 금지한다.
+2026-09-23 구현과 격리 검증을 완료했다. 전체 320개 테스트는 실패·skip 없이 통과했고 `test check bootJar`, 실제 Chrome/HTTP, Linux/Windows 파일시스템 장애, named volume/bind mount 재생성 및 DB/Root 복원을 검증했다. 상세 근거와 장애 재현 범위는 [구현·검증 기록](../reviews/plan0015/implementation-validation.md)에 있다. 기존 실제 DB Migration 또는 운영·외부 배포는 수행하지 않았다.

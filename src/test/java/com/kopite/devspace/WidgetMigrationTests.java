@@ -101,7 +101,9 @@ class WidgetMigrationTests {
     }
 
     @Test void postgresBackupRestoresAndFinalApplicationStartsWithoutChangingRows() throws Exception {
-        flyway(18).migrate();owner(w);
+        flyway(21).migrate();owner(w);
+        var storageRoot=Files.createTempDirectory("devspace-restore-storage-");
+        Files.writeString(storageRoot.resolve(".devspace-document-storage"),"devspace-document-storage-v1");
         sql("insert into dashboards(workspace_id,dashboard_key,schema_version,revision,widgets,created_at,updated_at,layout_revision) values(?,'home',2,7,'[]',now(),now(),7)",w);
         sql("insert into widgets(id,workspace_id,type,title,config_version,config,revision,created_at,updated_at) values(?,?,'board','Restored',1,'{\"selection\":{\"kind\":\"all\"}}',1,now(),now())",UUID.randomUUID(),w);
         String backup="/tmp/"+schema+".dump", restored="restore_"+UUID.randomUUID().toString().replace("-","");
@@ -120,6 +122,7 @@ class WidgetMigrationTests {
         assertEquals(restoredRows(db.getJdbcUrl()),before);
         try(var app=new org.springframework.boot.builder.SpringApplicationBuilder(DevspaceApplication.class).run(
             "--spring.config.location=classpath:widget-isolated-test.yml","--server.port=0",
+            "--app.storage.root="+storageRoot,"--app.attachment.cleanup.enabled=false",
             "--spring.datasource.url="+restoredUrl,"--spring.datasource.username="+db.getUsername(),"--spring.datasource.password="+db.getPassword(),
             "--spring.datasource.hikari.schema="+schema,"--spring.flyway.default-schema="+schema,"--spring.flyway.schemas="+schema,
             "--spring.jpa.properties.hibernate.default_schema="+schema)) {

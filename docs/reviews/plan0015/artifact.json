@@ -1,0 +1,29 @@
+{
+  "sha256": "59297c10005bd84470d4cea400463f5a5905fdb68dad20610403461e074637d5",
+  "migrations": [
+    "BOOT-INF/classes/db/migration/V10__create_link_collections_and_links.sql",
+    "BOOT-INF/classes/db/migration/V11__create_link_create_idempotency.sql",
+    "BOOT-INF/classes/db/migration/V12__create_home_dashboards.sql",
+    "BOOT-INF/classes/db/migration/V13__create_project_categories.sql",
+    "BOOT-INF/classes/db/migration/V14__create_project_category_create_idempotency.sql",
+    "BOOT-INF/classes/db/migration/V15__prepare_category_only_relations.sql",
+    "BOOT-INF/classes/db/migration/V16__category_only_cutover.sql",
+    "BOOT-INF/classes/db/migration/V17__retire_classification_scope.sql",
+    "BOOT-INF/classes/db/migration/V18__independent_widgets_and_placements.sql",
+    "BOOT-INF/classes/db/migration/V19__create_document_spaces_documents_attachments.sql",
+    "BOOT-INF/classes/db/migration/V1__create_users_auth_identities_workspaces.sql",
+    "BOOT-INF/classes/db/migration/V20__connect_journal_document_spaces.sql",
+    "BOOT-INF/classes/db/migration/V21__create_attachment_deletion_jobs.sql",
+    "BOOT-INF/classes/db/migration/V2__create_projects.sql",
+    "BOOT-INF/classes/db/migration/V3__create_project_create_idempotency.sql",
+    "BOOT-INF/classes/db/migration/V4__create_tasks.sql",
+    "BOOT-INF/classes/db/migration/V5__create_task_create_idempotency.sql",
+    "BOOT-INF/classes/db/migration/V6__create_journals.sql",
+    "BOOT-INF/classes/db/migration/V7__create_journal_create_idempotency.sql",
+    "BOOT-INF/classes/db/migration/V8__create_milestones.sql",
+    "BOOT-INF/classes/db/migration/V9__create_milestone_create_idempotency.sql"
+  ],
+  "testAuthenticationExcluded": true,
+  "storageProbeUsesExactArtifactClass": true,
+  "openInViewDisabled": true
+}

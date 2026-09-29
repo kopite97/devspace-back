@@ -38,7 +38,7 @@ class CategoryScopeRegressionTests {
         var p2=projects.create(u,"p2",new CreateProjectCommand("Same",null,"Java",null,null,null));
         UUID t=UUID.randomUUID(),j=UUID.randomUUID(),m=UUID.randomUUID();
         jdbc.update("insert into tasks(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Task',now(),now())",t,w,p.id());
-        jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Journal','Body',current_date,now(),now())",j,w,p.id());
+        JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Journal','Body',current_date,now(),now())",j,w,p.id());
         jdbc.update("insert into milestones(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Milestone',now(),now())",m,w,p.id());
         var dashboard=dashboards.save(u,0,List.of(new DashboardWidget("p","overview","Project","small",new com.kopite.devspace.dashboard.domain.DashboardSelection("project",p.id(),null),null)));
         var tBefore=tasks.get(u,t);var jBefore=journals.get(u,j);var mBefore=milestones.get(u,m);
@@ -82,7 +82,7 @@ class CategoryScopeRegressionTests {
     void seed(UUID w,UUID c) {
         UUID p=UUID.randomUUID();jdbc.update("insert into projects(id,workspace_id,name,stack,category_id,created_at,updated_at) values(?,?,'P','Java',?,now(),now())",p,w,c);
         jdbc.update("insert into tasks(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'T',now(),now())",UUID.randomUUID(),w,p);
-        jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'J','B',current_date,now(),now())",UUID.randomUUID(),w,p);
+        JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'J','B',current_date,now(),now())",UUID.randomUUID(),w,p);
         jdbc.update("insert into milestones(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'M',now(),now())",UUID.randomUUID(),w,p);
     }
     void readAll(UUID u,int count) {

@@ -41,7 +41,7 @@ class WidgetDataTests extends WidgetTestSupport {
     }
     @Test void journalMilestoneAndLinkCompositionMatchExistingQueries()throws Exception {
         var o=owner();UUID p=project(o);for(int i=0;i<5;i++){
-            jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Journal','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),p);
+            JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Journal','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),p);
             jdbc.update("insert into milestones(id,workspace_id,project_id,title,completed,created_at,updated_at) values(?,?,?,'Milestone',?,now(),now())",UUID.randomUUID(),o.workspace(),p,i==4);
         }
         var j=create(o,"journal");var m=create(o,"milestone");assertEquals(3,tree(request(o,get(W+"/"+id(j)+"/data"),null,200)).path("data").path("items").size());

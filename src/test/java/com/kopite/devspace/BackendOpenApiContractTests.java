@@ -45,6 +45,12 @@ class BackendOpenApiContractTests {
         Map.entry("/api/v2/tasks/stats", Set.of("get")),
         Map.entry("/api/v2/journals", Set.of("get", "post")),
         Map.entry("/api/v2/journals/{id}", Set.of("get", "patch", "delete")),
+        Map.entry("/api/v2/journals/{journalId}/documents", Set.of("get", "post")),
+        Map.entry("/api/v2/documents/{documentId}", Set.of("get", "put", "delete")),
+        Map.entry("/api/v2/documents/{documentId}/publish", Set.of("post")),
+        Map.entry("/api/v2/attachments", Set.of("post")),
+        Map.entry("/api/v2/attachments/{attachmentId}", Set.of("delete")),
+        Map.entry("/api/v2/attachments/{attachmentId}/content", Set.of("get")),
         Map.entry("/api/v2/milestones", Set.of("get", "post")),
         Map.entry("/api/v2/milestones/{id}", Set.of("get", "patch", "delete")),
         Map.entry("/api/v2/links", Set.of("get", "post")),
@@ -87,10 +93,10 @@ class BackendOpenApiContractTests {
             for (String path : mapping.getPatternValues()) if (path.startsWith("/api/"))
                 mapping.getMethodsCondition().getMethods().forEach(method -> implemented.add(method.name().toLowerCase(Locale.ROOT) + " " + path));
         });
-        assertEquals(49, implemented.size());
+        assertEquals(58, implemented.size());
         implemented.add("get /api/v1/auth/callback/{registrationId}");
         implemented.add("post /api/v1/auth/logout");
-        assertEquals(51, documented.size());
+        assertEquals(60, documented.size());
         assertEquals(implemented, documented);
         assertReferencesResolve(api, api);
     }
@@ -102,7 +108,7 @@ class BackendOpenApiContractTests {
             String path = entry.getKey();
             var op = api.path("paths").path(path).path(method);
             String success = path.endsWith("/login") || path.contains("/callback/") ? "302"
-                : path.endsWith("/logout") ? "204" : method.equals("post") && creations.contains(path) ? "201" : "200";
+                : path.endsWith("/logout") ? "204" : method.equals("post") && (creations.contains(path)||path.endsWith("/documents")||path.equals("/api/v2/attachments")) ? "201" : "200";
             assertEquals(path.equals("/api/v2/dashboards/home") ? Set.of() : Set.of(success), keys(op.path("responses")).stream().filter(c -> c.startsWith("2") || c.startsWith("3")).collect(Collectors.toSet()), path);
             for (var response : op.path("responses").properties()) if (Integer.parseInt(response.getKey()) >= 400) {
                 assertEquals(Set.of("application/json"), keys(response.getValue().path("content")), path + " " + response.getKey());
@@ -131,7 +137,7 @@ class BackendOpenApiContractTests {
                 assertEquals(128, key.path("schema").path("maxLength").asInt());
                 assertTrue(op.path("responses").has("409"));
             }
-            if (method.equals("delete")) {
+            if (method.equals("delete") && !path.startsWith("/api/v2/documents/") && !path.startsWith("/api/v2/attachments/")) {
                 var revision = parameter(op, "revision");
                 assertTrue(revision.path("required").asBoolean());
                 assertEquals("query", revision.path("in").asString());
@@ -140,7 +146,7 @@ class BackendOpenApiContractTests {
             }
             if (op.path("responses").has("400")) {
                 String description = op.path("responses").path("400").path("description").asString();
-                assertEquals(method.equals("get") && ((creations.contains(path) && !path.endsWith("/links") && !path.endsWith("/project-categories") && !path.endsWith("/initializations")) || path.equals("/api/v1/widgets/{id}/data")), description.contains("INVALID_CURSOR"), path + " " + method);
+                assertEquals(method.equals("get") && ((creations.contains(path) && !path.endsWith("/links") && !path.endsWith("/project-categories") && !path.endsWith("/initializations")) || path.equals("/api/v1/widgets/{id}/data") || path.endsWith("/documents")), description.contains("INVALID_CURSOR"), path + " " + method);
                 assertEquals(false, description.contains("UNSUPPORTED_SCHEMA_VERSION"), path + " " + method);
             }
         }

@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "isolatedRequestLimit": 1024,
+  "fileLimit": 10485760,
+  "results": [
+    {
+      "requestBytes": 1024,
+      "status": 201
+    },
+    {
+      "requestBytes": 1025,
+      "status": 413,
+      "code": "PAYLOAD_TOO_LARGE"
+    }
+  ]
+}

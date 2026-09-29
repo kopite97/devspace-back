@@ -31,6 +31,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FinalCategoryRuntimeTests {
     @Container static final PostgreSQLContainer postgres=new PostgreSQLContainer("postgres:16.4");
     @DynamicPropertySource static void database(DynamicPropertyRegistry r) {
+        try {
+            var root=java.nio.file.Files.createTempDirectory("devspace-final-storage-");
+            java.nio.file.Files.writeString(root.resolve(".devspace-document-storage"),"devspace-document-storage-v1");
+            r.add("app.storage.root",root::toString);
+            r.add("app.attachment.cleanup.enabled",()->false);
+        }catch(java.io.IOException failure){throw new java.io.UncheckedIOException(failure);}
         r.add("spring.datasource.url",postgres::getJdbcUrl);
         r.add("spring.datasource.username",postgres::getUsername);
         r.add("spring.datasource.password",postgres::getPassword);
@@ -39,7 +45,7 @@ class FinalCategoryRuntimeTests {
     @Autowired UserWorkspaceCreationService users; @Value("${app.security.origin}") String origin;
 
     @Test void finalSchemaSupportsNormalRelationsAndRetiresLegacyWithoutWriting()throws Exception {
-        assertEquals("18",jdbc.queryForObject("select version from flyway_schema_history order by installed_rank desc limit 1",String.class));
+        assertEquals("21",jdbc.queryForObject("select version from flyway_schema_history order by installed_rank desc limit 1",String.class));
         assertEquals(0,jdbc.queryForObject("select count(*) from information_schema.columns where table_schema='public' and column_name='scope'",Integer.class));
         var owner=users.createOrReuse("final",UUID.randomUUID().toString(),"Final");
         var context=SecurityContextHolder.createEmptyContext();context.setAuthentication(new UsernamePasswordAuthenticationToken(new InternalUserPrincipal(owner.user().getId(),"Final"),null,List.of()));

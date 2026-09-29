@@ -15,3 +15,5 @@ Completed plans in execution order.
 - [PLAN-0011: ProjectCategory-only classification](PLAN-0011-project-category-only-classification.md)
 - [PLAN-0013: Independent Widgets and Dashboard Placements](PLAN-0013-independent-widget-refactoring.md)
 - [PLAN-0014: Final Schema Consolidation and Bridge Retirement](PLAN-0014-final-schema-and-bridge-retirement.md)
+- [PLAN-0015: Document Editor Phase One](PLAN-0015-document-editor-phase-one.md)
+- [PLAN-0016: Document Attachment Registry Restoration](PLAN-0016-document-attachment-registry-restoration.md)

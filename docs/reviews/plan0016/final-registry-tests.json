@@ -1,0 +1,8 @@
+{
+  "tests": 6,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "result": "PASS",
+  "note": "Final extra assertions: response-only fields, 101 IDs, malformed UUID, unauthenticated/disabled user and archived project. Production code unchanged since full suite."
+}

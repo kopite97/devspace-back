@@ -8,4 +8,6 @@ public interface JournalRepository {
     void delete(Journal journal);
     Optional<Journal> findOwned(UUID workspaceId, UUID id);
     Optional<Journal> lockOwned(UUID workspaceId, UUID id);
+    Optional<Journal> findByDocumentSpace(UUID spaceId);
+    void flush();
 }

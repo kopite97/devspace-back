@@ -1,0 +1,38 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10485760B
+      max-request-size: 11534336B
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: isolated-document-test
+            client-secret: isolated-test-secret
+            scope: openid,profile,email
+            redirect-uri: http://localhost:8080/api/v1/auth/callback/google
+        provider:
+          google:
+            authorization-uri: http://127.0.0.1:18999/oauth2/authorize
+            token-uri: http://127.0.0.1:18999/token
+            jwk-set-uri: http://127.0.0.1:18999/jwks
+            user-info-uri: http://127.0.0.1:18999/userinfo
+            user-name-attribute: sub
+server:
+  address: 127.0.0.1
+  servlet:
+    session:
+      timeout: 12h
+      cookie:
+        name: JSESSIONID
+        secure: false
+app:
+  project:
+    cursor-signing-key: isolated-document-test-key-at-least-32-bytes
+  security:
+    origin: http://localhost:8080

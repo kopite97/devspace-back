@@ -18,6 +18,7 @@ public class Journal {
     @Id private UUID id;
     @Column(nullable=false,updatable=false) private UUID workspaceId;
     @Column(nullable=false) private UUID projectId;
+    @Column(nullable=false,updatable=false) private UUID documentSpaceId;
     @Column(nullable=false,columnDefinition="text") private String title;
     @Column(nullable=false,columnDefinition="text") private String body;
     @Column(nullable=false) private LocalDate entryDate;
@@ -25,10 +26,11 @@ public class Journal {
     @Column(nullable=false,updatable=false) private Instant createdAt;
     @Column(nullable=false) private Instant updatedAt;
 
-    public static Journal create(UUID workspace,JournalValues values,Instant now) {
+    public static Journal create(UUID workspace,UUID documentSpace,JournalValues values,Instant now) {
         Journal journal=new Journal();
         journal.id=UUID.randomUUID();
         journal.workspaceId=Objects.requireNonNull(workspace);
+        journal.documentSpaceId=Objects.requireNonNull(documentSpace);
         journal.assign(values);
         journal.revision=1;
         journal.createdAt=timestamp(now);

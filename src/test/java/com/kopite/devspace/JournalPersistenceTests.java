@@ -53,7 +53,11 @@ class JournalPersistenceTests {
         TimeZone original=TimeZone.getDefault();
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Kiritimati"));
-            Journal saved=transaction.execute(s->journals.save(Journal.create(workspace,values(project),created)));
+            Journal saved=transaction.execute(s->{
+                var space=com.kopite.devspace.documentspace.domain.DocumentSpace.create(created);
+                jdbc.update("insert into document_spaces values(?,?,?)",space.getId(),java.sql.Timestamp.from(created),java.sql.Timestamp.from(created));
+                return journals.save(Journal.create(workspace,space.getId(),values(project),created));
+            });
             assertNotNull(saved);
             TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
             transaction.executeWithoutResult(s->{
@@ -102,7 +106,7 @@ class JournalPersistenceTests {
     @Test
     void databaseConstraintsAreComplementaryAndRejectForeignProjectAndRevisionOverflow() {
         UUID workspace=workspace(); UUID project=project(workspace); UUID id=UUID.randomUUID();
-        jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Title','Body','2024-02-29',now(),now())",id,workspace,project);
+        JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Title','Body','2024-02-29',now(),now())",id,workspace,project);
         assertEquals(1L,jdbc.queryForObject("select revision from journals where id=?",Long.class,id));
         for(String assignment:new String[]{"title=null","title=' '","title=repeat('x',121)","body=''","body=null","body=repeat('x',20001)",
             "entry_date=null","entry_date='0001-01-01 BC'","entry_date='10000-01-01'","revision=0","revision=9007199254740992"})

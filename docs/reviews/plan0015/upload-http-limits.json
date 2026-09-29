@@ -1,0 +1,63 @@
+{
+  "mode": "seed",
+  "result": "PASS",
+  "calls": [
+    {
+      "method": "POST",
+      "path": "/api/v2/projects",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/journals",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/journals/4258410e-9959-4479-86e3-e54156ba7b2c/documents",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 413
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 413
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v2/documents/f8a44cad-4c9b-41f6-8b4c-182c8af1758d",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/journals/4258410e-9959-4479-86e3-e54156ba7b2c/documents",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 201
+    }
+  ],
+  "attachedId": "8bb26a05-c597-46d1-a669-85f19d787973",
+  "bytes": 10485760
+}

@@ -1,0 +1,114 @@
+{
+  "command": "gradlew.bat test --tests '*Attachment*Tests' --tests '*Document*Tests' --tests '*Journal*Tests' check bootJar --no-daemon",
+  "tests": 52,
+  "failures": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.kopite.devspace.AttachmentConcurrencyTests",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.AttachmentLifecycleTests",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.AttachmentUploadRecoveryTests",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.AttachmentUploadTests",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentApiTests",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentMigrationTests",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentMutationTests",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentOpenApiTests",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentPersistenceTests",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.DocumentSpaceAccessTests",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.JournalApiTests",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.JournalCommandTests",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.JournalOpenApiTests",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.JournalPersistenceTests",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.kopite.devspace.JournalQueryTests",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "note": "Earlier focused regression. The final authoritative run is full-suite-results.json (320 tests, all passed)."
+}

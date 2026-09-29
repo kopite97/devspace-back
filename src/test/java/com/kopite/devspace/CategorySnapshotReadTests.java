@@ -36,7 +36,7 @@ class CategorySnapshotReadTests {
             var a=categories.create(u,"a","A");var b=categories.create(u,"b","B");
             var p=projects.create(u,"p",new CreateProjectCommand("Project",null,"Java",null,null,null,new ProjectCategorySelection(true,a.id().toString())));
             jdbc.update("insert into tasks(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'T',now(),now())",UUID.randomUUID(),w,p.id());
-            jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'J','Body',current_date,now(),now())",UUID.randomUUID(),w,p.id());
+            JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'J','Body',current_date,now(),now())",UUID.randomUUID(),w,p.id());
             jdbc.update("insert into milestones(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'M',now(),now())",UUID.randomUUID(),w,p.id());
             var once=new AtomicBoolean();
             try(var executor=Executors.newSingleThreadExecutor()) {

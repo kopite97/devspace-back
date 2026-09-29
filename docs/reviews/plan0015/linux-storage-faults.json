@@ -1,0 +1,32 @@
+[
+    {
+        "mode":  "diskfull",
+        "result":  "PASS",
+        "os":  "Linux"
+    },
+    {
+        "mode":  "permissions",
+        "result":  "PASS",
+        "os":  "Linux"
+    },
+    {
+        "mode":  "symlink",
+        "result":  "PASS",
+        "os":  "Linux"
+    },
+    {
+        "mode":  "open-delete",
+        "result":  "PASS",
+        "os":  "Linux"
+    },
+    {
+        "mode":  "atomic",
+        "result":  "PASS",
+        "os":  "Linux"
+    },
+    {
+        "mode":  "readonly",
+        "result":  "PASS",
+        "os":  "Linux"
+    }
+]

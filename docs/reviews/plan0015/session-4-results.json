@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "newApiTests": 4,
+  "priorRegressionTests": 28,
+  "note": "Initial run: 31/32 passed; only Swagger cache-header assertion failed. Corrected documentation-endpoint assertion to preserve existing security headers; all four Document API tests rerun successfully. No runtime change after regression run.",
+  "validated": [
+    "opaque JSON and required-nullable DTO",
+    "strict parsing and body/content/depth limits",
+    "105-row keyset pagination and bound cursors",
+    "session, CSRF and tenant isolation",
+    "three operations in OpenAPI"
+  ]
+}

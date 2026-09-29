@@ -59,7 +59,7 @@ class CategoryOnlyQueryApiTests {
     void children(Owner o,String project)throws Exception {
         var id=UUID.fromString(project);
         jdbc.update("insert into tasks(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Needle',now(),now())",UUID.randomUUID(),o.workspace(),id);
-        jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Needle','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),id);
+        JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Needle','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),id);
         jdbc.update("insert into milestones(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Needle',now(),now())",UUID.randomUUID(),o.workspace(),id);
     }
     @Test void filtersIntersectionsOwnershipAndStrictQueries()throws Exception {
@@ -147,7 +147,7 @@ class CategoryOnlyQueryApiTests {
             .contentType("application/json").content(json.writeValueAsString(Map.of("revision",2)))).andExpect(status().isOk());
         patchProject(o,p,2,null);assertEquals(1,read(o,"/api/v2/tasks?category=uncategorized").path("total").asInt());
         jdbc.update("update journals set entry_date='2024-02-29' where workspace_id=?",o.workspace());
-        UUID earlier=UUID.randomUUID();jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Earlier','Body','2024-02-28',now(),now())",earlier,o.workspace(),UUID.fromString(p));
+        UUID earlier=UUID.randomUUID();JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Earlier','Body','2024-02-28',now(),now())",earlier,o.workspace(),UUID.fromString(p));
         assertEquals(1,read(o,"/api/v2/journals?from=2024-02-29&to=2024-02-29").path("total").asInt());
         assertEquals(earlier.toString(),read(o,"/api/v2/journals?sort=oldest&limit=1").path("items").get(0).path("id").asString());
         mvc.perform(get("/api/v2/journals?from=2024-03-01&to=2024-02-29").session(o.session())).andExpect(status().isBadRequest());

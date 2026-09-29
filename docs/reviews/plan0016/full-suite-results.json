@@ -1,0 +1,10 @@
+{
+  "tests": 326,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": 79,
+  "command": "gradlew.bat test check bootJar --no-daemon",
+  "result": "PASS",
+  "jarSha256": "b40981eb2899bad468b34724ad1d77133289234a3ccbee944565c72c39b69f9b"
+}

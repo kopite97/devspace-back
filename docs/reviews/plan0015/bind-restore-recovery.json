@@ -1,0 +1,13 @@
+{
+  "mode": "recovered",
+  "result": "PASS",
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/v2/documents/e0393bd0-a063-4039-ae5b-10680e4fab38",
+      "status": 404
+    }
+  ],
+  "attachedId": "8bb26a05-c597-46d1-a669-85f19d787973",
+  "bytes": 10485760
+}

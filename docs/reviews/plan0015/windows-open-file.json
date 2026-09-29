@@ -1,0 +1,14 @@
+[
+    {
+        "mode":  "open-delete",
+        "result":  "PASS",
+        "os":  "Windows 11",
+        "deleteDeferredUntilClose":  false
+    },
+    {
+        "mode":  "windows-locked-delete",
+        "result":  "PASS",
+        "os":  "Windows 11",
+        "deleteDeferredUntilClose":  true
+    }
+]

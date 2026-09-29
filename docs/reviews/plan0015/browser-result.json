@@ -1,0 +1,152 @@
+{
+  "result": "DOCUMENT_EDITOR_BROWSER_PASS",
+  "renderedOperations": [
+    [
+      "POST",
+      "/api/v2/journals/{journalId}/documents"
+    ],
+    [
+      "GET",
+      "/api/v2/journals/{journalId}/documents"
+    ],
+    [
+      "GET",
+      "/api/v2/documents/{documentId}"
+    ],
+    [
+      "PUT",
+      "/api/v2/documents/{documentId}"
+    ],
+    [
+      "DELETE",
+      "/api/v2/documents/{documentId}"
+    ],
+    [
+      "POST",
+      "/api/v2/documents/{documentId}/publish"
+    ],
+    [
+      "POST",
+      "/api/v2/attachments"
+    ],
+    [
+      "GET",
+      "/api/v2/attachments/{attachmentId}/content"
+    ],
+    [
+      "DELETE",
+      "/api/v2/attachments/{attachmentId}"
+    ]
+  ],
+  "swaggerDetailExecute": true,
+  "multipartFileSelector": true,
+  "binaryRendered": true,
+  "runtime": {
+    "results": [
+      {
+        "method": "POST",
+        "path": "/api/v2/projects",
+        "status": 201,
+        "revision": "33"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v2/journals",
+        "status": 201,
+        "revision": "34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/journals/409ff649-ba9a-414b-8134-cd73e8fd672e",
+        "status": 200,
+        "revision": "34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/journals/409ff649-ba9a-414b-8134-cd73e8fd672e/documents",
+        "status": 200,
+        "revision": "34"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v2/journals/409ff649-ba9a-414b-8134-cd73e8fd672e/documents",
+        "status": 201,
+        "revision": "35"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/v2/documents/a1249915-d41d-4158-ae30-e45f09c51c95",
+        "status": 200,
+        "revision": "37"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/documents/a1249915-d41d-4158-ae30-e45f09c51c95",
+        "status": 200,
+        "revision": "37"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/v2/attachments/d876d80e-d87c-422d-9771-df148306f6fa",
+        "status": 409,
+        "revision": null
+      },
+      {
+        "method": "POST",
+        "path": "/api/v2/documents/a1249915-d41d-4158-ae30-e45f09c51c95/publish",
+        "status": 200,
+        "revision": "38"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v2/documents/a1249915-d41d-4158-ae30-e45f09c51c95/publish",
+        "status": 200,
+        "revision": "38"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/journals/409ff649-ba9a-414b-8134-cd73e8fd672e/documents",
+        "status": 200,
+        "revision": "38"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/v2/documents/a1249915-d41d-4158-ae30-e45f09c51c95",
+        "status": 200,
+        "revision": "39"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/v2/attachments/d876d80e-d87c-422d-9771-df148306f6fa",
+        "status": 200,
+        "revision": "40"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/attachments/d876d80e-d87c-422d-9771-df148306f6fa/content",
+        "status": 404,
+        "revision": null
+      }
+    ],
+    "documentId": "a1249915-d41d-4158-ae30-e45f09c51c95",
+    "journalId": "409ff649-ba9a-414b-8134-cd73e8fd672e",
+    "upload": {
+      "id": "d876d80e-d87c-422d-9771-df148306f6fa",
+      "documentId": "a1249915-d41d-4158-ae30-e45f09c51c95",
+      "originalFilename": "hello.txt",
+      "contentType": "text/plain",
+      "size": 12,
+      "status": "TEMP",
+      "contentUrl": "/api/v2/attachments/d876d80e-d87c-422d-9771-df148306f6fa/content",
+      "createdAt": "2026-09-22T17:26:29.254305Z"
+    }
+  },
+  "deletion": {
+    "document": {
+      "deletedId": "a1249915-d41d-4158-ae30-e45f09c51c95"
+    },
+    "journal": {
+      "deletedId": "409ff649-ba9a-414b-8134-cd73e8fd672e"
+    }
+  }
+}

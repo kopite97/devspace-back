@@ -11,6 +11,7 @@ import java.util.UUID;
 
 interface JournalJpaRepository extends JpaRepository<Journal, UUID> {
     Optional<Journal> findByWorkspaceIdAndId(UUID workspaceId, UUID id);
+    Optional<Journal> findByDocumentSpaceId(UUID documentSpaceId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Journal t where t.workspaceId = :workspaceId and t.id = :id")

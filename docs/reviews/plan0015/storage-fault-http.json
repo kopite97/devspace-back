@@ -1,0 +1,28 @@
+{
+  "mode": "fault",
+  "result": "PASS",
+  "calls": [
+    {
+      "method": "DELETE",
+      "path": "/api/v2/attachments/ee58f209-46e3-4422-8d8e-73821a3113fc",
+      "status": 503
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/documents/e0393bd0-a063-4039-ae5b-10680e4fab38",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/documents/e0393bd0-a063-4039-ae5b-10680e4fab38",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/attachments",
+      "status": 503
+    }
+  ],
+  "attachedId": "8bb26a05-c597-46d1-a669-85f19d787973",
+  "bytes": 10485760
+}

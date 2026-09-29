@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: ${ATTACHMENT_MAX_BYTES:10485760}B
+      max-request-size: ${ATTACHMENT_REQUEST_MAX_BYTES:11534336}B
   # Spring Boot explicitly imports the root .env; Gradle does not load it itself.
   config:
     import: optional:file:.env[.properties]
@@ -12,6 +16,7 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
 
@@ -41,6 +46,20 @@ server:
         same-site: lax
 
 app:
+  storage:
+    root: ${FILE_STORAGE_ROOT}
+  attachment:
+    max-bytes: ${ATTACHMENT_MAX_BYTES:10485760}
+    cleanup:
+      enabled: ${ATTACHMENT_CLEANUP_ENABLED:true}
+      grace-seconds: ${ATTACHMENT_TEMP_GRACE_SECONDS:86400}
+      delay-ms: ${ATTACHMENT_CLEANUP_DELAY_MS:600000}
+      batch-size: ${ATTACHMENT_CLEANUP_BATCH_SIZE:100}
+    stream:
+      max-concurrent: ${ATTACHMENT_STREAM_MAX_CONCURRENT:16}
+      timeout-ms: ${ATTACHMENT_STREAM_TIMEOUT_MS:30000}
+  document:
+    max-content-bytes: ${DOCUMENT_CONTENT_MAX_BYTES:1048576}
   link:
     max-links: ${DEVSPACE_LINK_MAX_LINKS:500}
   project:

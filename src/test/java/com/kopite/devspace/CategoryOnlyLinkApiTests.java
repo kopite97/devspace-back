@@ -59,7 +59,7 @@ class CategoryOnlyLinkApiTests {
     void children(Owner o,String project)throws Exception {
         var id=UUID.fromString(project);
         jdbc.update("insert into tasks(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Needle',now(),now())",UUID.randomUUID(),o.workspace(),id);
-        jdbc.update("insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Needle','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),id);
+        JournalFixtures.insert(jdbc,"insert into journals(id,workspace_id,project_id,title,body,entry_date,created_at,updated_at) values(?,?,?,'Needle','Body',current_date,now(),now())",UUID.randomUUID(),o.workspace(),id);
         jdbc.update("insert into milestones(id,workspace_id,project_id,title,created_at,updated_at) values(?,?,?,'Needle',now(),now())",UUID.randomUUID(),o.workspace(),id);
     }
 
