@@ -1,14 +1,67 @@
+
 services:
+  # ==========================================
+  # PostgreSQL
+  # ==========================================
   postgres:
     image: postgres:16.4
+    restart: unless-stopped
+
     environment:
       POSTGRES_DB: ${DB_NAME:?DB_NAME must be set}
       POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME must be set}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+
     ports:
       - "127.0.0.1:${DB_PORT:?DB_PORT must be set}:5432"
+
     volumes:
       - devspace-postgres-data:/var/lib/postgresql/data
 
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Spring Boot Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    # 개인 서버의 운영 환경변수
+    env_file:
+      - ${APP_ENV_FILE:-/opt/devspace-back/.env}
+
+    environment:
+      SPRING_DATASOURCE_URL: ${DB_URL:?DB_URL must be set}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # 문서 및 첨부파일 영구 저장
+    volumes:
+      - type: bind
+        source: ${FILE_STORAGE_ROOT:?FILE_STORAGE_ROOT must be set}
+        target: ${FILE_STORAGE_ROOT:?FILE_STORAGE_ROOT must be set}
+        bind:
+          create_host_path: false
+
+# ==========================================
+# Persistent Volumes
+# ==========================================
 volumes:
   devspace-postgres-data:

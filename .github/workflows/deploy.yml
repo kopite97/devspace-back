@@ -1,0 +1,97 @@
+
+name: Deploy Devspace Backend
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 중복 배포 방지
+concurrency:
+  group: devspace-back-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Spring Boot
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
+
+    env:
+      ENV_FILE: /opt/devspace-back/.env
+
+    steps:
+      # 1. Repository Checkout
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # 2. 배포 환경 확인
+      - name: Validate Environment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # 환경변수 파일 존재 확인
+          if [ ! -r "$ENV_FILE" ]; then
+            echo "::error::Environment file not readable"
+            exit 1
+          fi
+
+          # Docker Compose 설치 확인
+          docker compose version
+
+          # Compose 설정 검증
+          docker compose \
+            --env-file "$ENV_FILE" \
+            -f compose.yml \
+            config -q
+
+      # 3. 기존 PostgreSQL 실행 상태 확인
+      - name: Check PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DB_CONTAINER=$(docker compose \
+            --env-file "$ENV_FILE" \
+            -f compose.yml \
+            ps --status running -q postgres)
+
+          if [ -z "$DB_CONTAINER" ]; then
+            echo "::error::Existing PostgreSQL is not running in the configured Compose project"
+            exit 1
+          fi
+
+          echo "PostgreSQL container is running"
+
+      # 4. Spring Boot 빌드 및 배포
+      - name: Deploy Application
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker compose \
+            --env-file "$ENV_FILE" \
+            -f compose.yml \
+            up -d \
+            --no-deps \
+            --build \
+            --wait \
+            --wait-timeout 120 \
+            app
+
+      # 5. 배포 결과 확인
+      - name: Check Deployment
+        shell: bash
+        run: |
+          docker compose \
+            --env-file "$ENV_FILE" \
+            -f compose.yml \
+            ps app
