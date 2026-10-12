@@ -95,3 +95,4 @@ jobs:
             --env-file "$ENV_FILE" \
             -f compose.yml \
             ps app
+          
