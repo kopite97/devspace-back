@@ -7,71 +7,83 @@ on:
       - main
 
   workflow_dispatch:
+    inputs:
+      initialize_postgres:
+        description: "Start PostgreSQL (first setup only)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
-# 중복 배포 방지
 concurrency:
   group: devspace-back-production
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy Spring Boot
+    name: Deploy Application
     runs-on: [self-hosted, linux, x64]
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     env:
       ENV_FILE: /opt/devspace-back/.env
 
     steps:
-      # 1. Repository Checkout
       - name: Checkout Repository
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      # 2. 배포 환경 확인
       - name: Validate Environment
         shell: bash
         run: |
           set -euo pipefail
 
-          # 환경변수 파일 존재 확인
-          if [ ! -r "$ENV_FILE" ]; then
-            echo "::error::Environment file not readable"
-            exit 1
-          fi
+          test -r "$ENV_FILE"
 
-          # Docker Compose 설치 확인
-          docker compose version
-
-          # Compose 설정 검증
           docker compose \
             --env-file "$ENV_FILE" \
             -f compose.yml \
             config -q
 
-      # 3. 기존 PostgreSQL 실행 상태 확인
+      # 수동 실행 시 옵션을 선택한 경우에만 기동
+      - name: Initialize PostgreSQL
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.initialize_postgres }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker compose \
+            --env-file "$ENV_FILE" \
+            -f compose.yml \
+            up -d --wait --wait-timeout 180 postgres
+
       - name: Check PostgreSQL
         shell: bash
         run: |
           set -euo pipefail
 
-          DB_CONTAINER=$(docker compose \
+          CID=$(docker compose \
             --env-file "$ENV_FILE" \
             -f compose.yml \
-            ps --status running -q postgres)
+            ps -q postgres)
 
-          if [ -z "$DB_CONTAINER" ]; then
-            echo "::error::Existing PostgreSQL is not running in the configured Compose project"
+          if [ -z "$CID" ]; then
+            echo "::error::PostgreSQL container not found"
             exit 1
           fi
 
-          echo "PostgreSQL container is running"
+          STATUS=$(docker inspect \
+            --format '{{.State.Health.Status}}' "$CID")
 
-      # 4. Spring Boot 빌드 및 배포
+          if [ "$STATUS" != "healthy" ]; then
+            echo "::error::PostgreSQL is not healthy"
+            exit 1
+          fi
+
+          echo "PostgreSQL is healthy"
+
       - name: Deploy Application
         shell: bash
         run: |
@@ -87,12 +99,10 @@ jobs:
             --wait-timeout 120 \
             app
 
-      # 5. 배포 결과 확인
       - name: Check Deployment
         shell: bash
         run: |
           docker compose \
             --env-file "$ENV_FILE" \
             -f compose.yml \
-            ps app
-          
+            ps
