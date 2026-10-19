@@ -46,6 +46,24 @@ server:
         same-site: lax
 
 app:
+  github:
+    enabled: ${GITHUB_ENABLED:false}
+    worker-enabled: ${GITHUB_WORKER_ENABLED:true}
+    worker-delay-ms: ${GITHUB_WORKER_DELAY_MS:1000}
+    app-id: ${GITHUB_APP_ID:}
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+    app-slug: ${GITHUB_APP_SLUG:}
+    private-key-path: ${GITHUB_PRIVATE_KEY_PATH:}
+    encryption-key: ${GITHUB_TOKEN_ENCRYPTION_KEY:}
+    encryption-key-id: ${GITHUB_TOKEN_ENCRYPTION_KEY_ID:v1}
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+    callback-url: ${GITHUB_CALLBACK_URL:}
+    frontend-return-url: ${GITHUB_FRONTEND_RETURN_URL:}
+    api-url: ${GITHUB_API_URL:https://api.github.com}
+    authorization-url: ${GITHUB_AUTHORIZATION_URL:https://github.com/login/oauth/authorize}
+    token-url: ${GITHUB_TOKEN_URL:https://github.com/login/oauth/access_token}
+    api-version: ${GITHUB_API_VERSION:2026-03-10}
   storage:
     root: ${FILE_STORAGE_ROOT}
   attachment:

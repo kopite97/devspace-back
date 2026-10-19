@@ -45,7 +45,7 @@ class FinalCategoryRuntimeTests {
     @Autowired UserWorkspaceCreationService users; @Value("${app.security.origin}") String origin;
 
     @Test void finalSchemaSupportsNormalRelationsAndRetiresLegacyWithoutWriting()throws Exception {
-        assertEquals("21",jdbc.queryForObject("select version from flyway_schema_history order by installed_rank desc limit 1",String.class));
+        assertEquals("39",jdbc.queryForObject("select version from flyway_schema_history order by installed_rank desc limit 1",String.class));
         assertEquals(0,jdbc.queryForObject("select count(*) from information_schema.columns where table_schema='public' and column_name='scope'",Integer.class));
         var owner=users.createOrReuse("final",UUID.randomUUID().toString(),"Final");
         var context=SecurityContextHolder.createEmptyContext();context.setAuthentication(new UsernamePasswordAuthenticationToken(new InternalUserPrincipal(owner.user().getId(),"Final"),null,List.of()));

@@ -15,9 +15,12 @@ public record TaskResponse(
     @Schema(allowableValues={"todo","doing","done"}) String status,
     @Schema(allowableValues={"normal","high"}) String priority,
     @Schema(maxLength=40) String tag,
-    @Schema(accessMode=Schema.AccessMode.READ_ONLY,types={"string","null"},format="date-time") Instant deletedAt) {
+    @Schema(accessMode=Schema.AccessMode.READ_ONLY,types={"string","null"},format="date-time") Instant deletedAt,
+    @Schema(accessMode=Schema.AccessMode.READ_ONLY,types={"object","null"}) com.kopite.devspace.task.application.model.TaskSourceSnapshot source) {
+    public TaskResponse(UUID id,long revision,Instant createdAt,Instant updatedAt,String title,UUID projectId,String projectName,UUID categoryId,
+            String description,String status,String priority,String tag,Instant deletedAt) { this(id,revision,createdAt,updatedAt,title,projectId,projectName,categoryId,description,status,priority,tag,deletedAt,null); }
     public static TaskResponse from(TaskSnapshot t) {
         return new TaskResponse(t.id(),t.revision(),t.createdAt(),t.updatedAt(),t.title(),t.projectId(),
-            t.projectName(),t.categoryId(),t.description(),t.status(),t.priority(),t.tag(),t.deletedAt());
+            t.projectName(),t.categoryId(),t.description(),t.status(),t.priority(),t.tag(),t.deletedAt(),t.source());
     }
 }

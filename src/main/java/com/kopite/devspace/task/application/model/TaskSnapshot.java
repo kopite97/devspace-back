@@ -6,11 +6,15 @@ import java.time.Instant;
 import java.util.UUID;
 public record TaskSnapshot(UUID id, long revision, Instant createdAt, Instant updatedAt, String title,
     UUID projectId, String projectName, UUID categoryId, String description, String status, String priority,
-    String tag, Instant deletedAt, @com.fasterxml.jackson.annotation.JsonIgnore Long dataRevision) {
+    String tag, Instant deletedAt, @com.fasterxml.jackson.annotation.JsonIgnore Long dataRevision, @io.swagger.v3.oas.annotations.media.Schema(types={"object","null"}) TaskSourceSnapshot source) {
+    public TaskSnapshot(UUID id, long revision, Instant createdAt, Instant updatedAt, String title,
+    UUID projectId, String projectName, UUID categoryId, String description, String status, String priority,
+    String tag, Instant deletedAt, Long dataRevision) { this(id,revision,createdAt,updatedAt,title,projectId,projectName,categoryId,description,status,priority,tag,deletedAt,dataRevision,null); }
     public TaskSnapshot(UUID id, long revision, Instant createdAt, Instant updatedAt, String title,
     UUID projectId, String projectName, UUID categoryId, String description, String status, String priority,
     String tag, Instant deletedAt) { this(id, revision, createdAt, updatedAt, title, projectId, projectName, categoryId, description, status, priority, tag, deletedAt, null); }
-    public TaskSnapshot observed(long workspaceRevision) { return new TaskSnapshot(id, revision, createdAt, updatedAt, title, projectId, projectName, categoryId, description, status, priority, tag, deletedAt, workspaceRevision); }
+    public TaskSnapshot observed(long workspaceRevision) { return new TaskSnapshot(id, revision, createdAt, updatedAt, title, projectId, projectName, categoryId, description, status, priority, tag, deletedAt, workspaceRevision,source); }
+    public TaskSnapshot withSource(TaskSourceSnapshot value) { return new TaskSnapshot(id,revision,createdAt,updatedAt,title,projectId,projectName,categoryId,description,status,priority,tag,deletedAt,dataRevision,value); }
     public static TaskSnapshot from(Task task, Project project) {
         if (!task.getWorkspaceId().equals(project.getWorkspaceId()) || !task.getProjectId().equals(project.getId()))
             throw new TaskNotFoundException();

@@ -188,7 +188,7 @@ class TaskCommandTests {
                 throw new IllegalStateException("simulated replay storage failure");
             }
         };
-        var service = new TaskCommandService(currentUser, workspaces, projectRepository, taskRepository, failing, java.time.Clock.systemUTC());
+        var service = new TaskCommandService(currentUser, workspaces, projectRepository, taskRepository, failing, java.time.Clock.systemUTC(), org.mockito.Mockito.mock(com.kopite.devspace.task.application.port.TaskSourceAccess.class));
         assertThrows(IllegalStateException.class, () -> transaction.executeWithoutResult(s -> service.create(user, "storage-failure", input(project))));
         assertEquals(2, counter(user));
         assertEquals(1L, jdbc.queryForObject("select count(*) from tasks where project_id=?", Long.class, project));

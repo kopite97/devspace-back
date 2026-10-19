@@ -22,6 +22,25 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(com.kopite.devspace.github.domain.GitHubException.class)
+    ResponseEntity<ApiError> github(com.kopite.devspace.github.domain.GitHubException ex) {
+        int status = switch (ex.code()) {
+            case "GITHUB_INVALID_SIGNATURE" -> 401;
+            case "GITHUB_PAYLOAD_TOO_LARGE" -> 413;
+            case "GITHUB_DELIVERY_CONFLICT", "GITHUB_ACCESS_SCOPE_CHANGED", "GITHUB_SYNC_PAUSED", "GITHUB_LABEL_UNAVAILABLE" -> 409;
+            case "RESOURCE_NOT_FOUND", "GITHUB_ACCESS_DENIED" -> 404;
+            case "GITHUB_ACCOUNT_ALREADY_CONNECTED", "GITHUB_ACCOUNT_NOT_CONNECTED", "GITHUB_REAUTHORIZATION_REQUIRED", "GITHUB_REFRESH_IN_PROGRESS",
+                    "PROJECT_ARCHIVED", "REVISION_CONFLICT", "IDEMPOTENCY_KEY_REUSED", "GITHUB_REPOSITORY_ALREADY_CONNECTED", "GITHUB_LINK_INACTIVE", "GITHUB_ACCOUNT_IN_USE" -> 409;
+            case "GITHUB_NOT_CONFIGURED", "GITHUB_UNAVAILABLE", "GITHUB_CREDENTIALS_UNAVAILABLE", "GITHUB_RESPONSE_TOO_LARGE" -> 503;
+            case "GITHUB_RATE_LIMITED", "GITHUB_LINK_LIMIT_EXCEEDED", "GITHUB_IMPORT_QUEUE_FULL" -> 429;
+            default -> 400;
+        };
+        var response = error(status, ex.code(), "GitHub operation could not be completed", Map.of());
+        if (ex instanceof com.kopite.devspace.github.domain.GitHubRateLimitException rate)
+            return ResponseEntity.status(status).headers(response.getHeaders()).header("Retry-After",
+                    Long.toString(Math.max(1, java.time.Duration.between(java.time.Instant.now(), rate.retryAt()).toSeconds() + 1))).body(response.getBody());
+        return response;
+    }
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     ResponseEntity<ApiError> uploadTooLarge(){return error(413,"PAYLOAD_TOO_LARGE","Upload exceeds the configured limit",Map.of());}
     @ExceptionHandler({org.springframework.web.multipart.MultipartException.class,org.springframework.web.multipart.support.MissingServletRequestPartException.class})

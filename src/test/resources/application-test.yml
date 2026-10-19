@@ -17,6 +17,9 @@ spring:
             user-name-attribute: sub
 
 app:
+  github:
+    enabled: false
+    worker-enabled: false
   security:
     origin: http://localhost:8080
   attachment:

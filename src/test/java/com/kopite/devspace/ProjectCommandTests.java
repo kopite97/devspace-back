@@ -177,7 +177,7 @@ class ProjectCommandTests {
     }
 
     private ProjectCommandService freshService(Clock clock) {
-        return new ProjectCommandService(currentUser, workspaces, projects, new ProjectCreateReplayAdapter(jdbc, json), clock, categories);
+        return new ProjectCommandService(currentUser, workspaces, projects, new ProjectCreateReplayAdapter(jdbc, json), clock, categories,org.mockito.Mockito.mock(com.kopite.devspace.project.application.port.ProjectExternalLifecycle.class));
     }
 
     private List<Object> race(Callable<ProjectSnapshot> first, Callable<ProjectSnapshot> second) throws Exception {

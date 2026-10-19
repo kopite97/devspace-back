@@ -59,7 +59,7 @@ class TaskOpenApiTests {
                 assertTrue(operation.get("security").valueStream().anyMatch(s->s.has("sessionCookie")));
                 for(String code:(method.equals("get") ? List.of("400","401","403","404","500") : List.of("400","401","403","404","409","500")))
                     assertEquals("#/components/schemas/ApiError",operation.get("responses").get(code).get("content").get("application/json").get("schema").get("$ref").asString());
-                if(method.equals("get")) assertFalse(operation.get("responses").has("409"));
+                if(method.equals("get")) assertEquals(entry.getKey().equals("/api/v2/tasks"),operation.get("responses").has("409"));
                 if(!method.equals("get")) assertTrue(parameter(operation,"X-CSRF-Token").get("required").asBoolean());
             }
         }
@@ -96,12 +96,12 @@ class TaskOpenApiTests {
         assertEquals("",request.get("properties").get("description").get("default").asString());
         assertEquals("normal",request.get("properties").get("priority").get("default").asString());
         assertEquals("todo",request.get("properties").get("status").get("default").asString());
-        var response=schemas.get("TaskResponse"); assertEquals(13,response.get("required").size());
+        var response=schemas.get("TaskResponse"); assertEquals(14,response.get("required").size());
         assertTrue(strings(response.get("properties").get("deletedAt").get("type")).contains("null"));
         for(String field:List.of("id","createdAt","updatedAt","projectName","categoryId","deletedAt"))
             assertTrue(response.get("properties").get(field).get("readOnly").asBoolean());
-        assertEquals(Set.of("items","total","nextCursor"),strings(schemas.get("TaskListResponse").get("required")));
-        assertEquals(Set.of("counts","total","asOf"),strings(schemas.get("TaskStatsResponse").get("required")));
+        assertEquals(Set.of("items","total","nextCursor","externalDataUnavailable"),strings(schemas.get("TaskListResponse").get("required")));
+        assertEquals(Set.of("counts","total","asOf","externalDataUnavailable"),strings(schemas.get("TaskStatsResponse").get("required")));
     }
     private JsonNode parameter(JsonNode operation,String name) {
         return operation.get("parameters").valueStream().filter(p->p.get("name").asString().equals(name)).findFirst().orElseThrow();

@@ -56,7 +56,7 @@ class DashboardOverviewApiTests {
     // Widget and placement contracts are covered by WidgetApiTests and CategoryOnlyDashboardApiTests.
     @Test void overviewExactZeroShapeTotalsArchivedAndIntersection() throws Exception {
         var o=owner();var empty=read(o,OVERVIEW);
-        assertEquals(Set.of("category","projectId","projects","tasks","asOf"),keys(empty));assertTrue(empty.get("projectId").isNull());assertEquals("all",empty.get("category").asString());
+        assertEquals(Set.of("category","projectId","projects","tasks","asOf","externalDataUnavailable"),keys(empty));assertTrue(empty.get("projectId").isNull());assertEquals("all",empty.get("category").asString());
         assertEquals(Set.of("total","archived","byCategory"),keys(empty.get("projects")));assertEquals(1,empty.path("projects").path("byCategory").size());assertTrue(empty.path("projects").path("byCategory").get(0).path("categoryId").isNull());assertEquals(Set.of("todo","doing","done","total"),keys(empty.get("tasks")));
         UUID active=project(o,"unity",false),archived=project(o,"server",true);
         for(String status:List.of("todo","doing","done"))jdbc.update("insert into tasks(id,workspace_id,project_id,title,status,created_at,updated_at) values(?,?,?,'Task',?,now(),now())",UUID.randomUUID(),o.workspace(),archived,status);

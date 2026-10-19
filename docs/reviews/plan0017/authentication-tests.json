@@ -1,0 +1,44 @@
+[
+  {
+    "suite": "com.kopite.devspace.github.infrastructure.GitHubConfigurationTests",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.kopite.devspace.github.infrastructure.GitHubCryptographyTests",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.kopite.devspace.github.infrastructure.GitHubHttpTests",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.kopite.devspace.github.infrastructure.GitHubProviderTests",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.kopite.devspace.GitHubAuthorizationTests",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.kopite.devspace.GitHubMigrationTests",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

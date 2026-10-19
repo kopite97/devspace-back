@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class WorkspaceOpenApiConfiguration {
     @Bean OpenApiCustomizer workspaceObservationHeader() {
         return api -> api.getPaths().forEach((path, item) -> {
+            if(path.contains("/github/")||path.endsWith("/github-issue"))return;
             if (!path.startsWith("/api/v2/") && !path.startsWith("/api/v1/project-categories") && !path.startsWith("/api/v1/widgets") && !path.startsWith("/api/v3/dashboards/")) return;
             item.readOperations().forEach(operation -> operation.getResponses().forEach((status, response) -> {
                 if (!status.equals("200") && !status.equals("201")) return;

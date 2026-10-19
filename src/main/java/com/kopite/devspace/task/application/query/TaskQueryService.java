@@ -26,8 +26,13 @@ public class TaskQueryService {
     private final TaskSearchRepository search;
     private final TaskCursorCodec cursors;
     private final Clock projectClock;
-    public record Page(List<TaskSnapshot> items, long total, String nextCursor, Long dataRevision) {}
-    public record Stats(Map<String, Long> counts, long total, Instant asOf, Long dataRevision) {}
+    private final com.kopite.devspace.task.application.port.TaskSourceAccess sources;
+    public record Page(List<TaskSnapshot> items, long total, String nextCursor, Long dataRevision, boolean externalDataUnavailable) {
+        public Page(List<TaskSnapshot> items,long total,String nextCursor,Long dataRevision) { this(items,total,nextCursor,dataRevision,false); }
+    }
+    public record Stats(Map<String, Long> counts, long total, Instant asOf, Long dataRevision, boolean externalDataUnavailable) {
+        public Stats(Map<String,Long> counts,long total,Instant asOf,Long dataRevision) {this(counts,total,asOf,dataRevision,false);}
+    }
 
     public TaskSnapshot get(UUID userId, UUID id) {
         UUID workspace = currentUser.resolve(userId).workspace().getId();
@@ -35,6 +40,7 @@ public class TaskQueryService {
     }
     public Page list(UUID userId, TaskListFilter filter, String cursor) {
         UUID workspace = ownedWorkspace(userId, filter);
+        filter = filter.withAccessScope(sources.scopeVersion(workspace));
         var after = cursor == null ? null : cursors.decode(workspace, filter, cursor);
         long total = search.count(workspace, filter);
         var rows = search.page(workspace, filter, after);
@@ -44,14 +50,14 @@ public class TaskQueryService {
             var last = items.getLast();
             next = cursors.encode(workspace, filter, new TaskCursor(last.createdAt(), last.id()));
         }
-        return new Page(items, total, next, currentUser.resolve(userId).workspace().getDataRevision());
+        return new Page(items, total, next, currentUser.resolve(userId).workspace().getDataRevision(),sources.unavailable(workspace));
     }
     public Stats stats(UUID userId, TaskListFilter filter) {
         if (filter.deleted() || filter.status() != null)
             throw new com.kopite.devspace.task.domain.TaskValidationException("filters", "stats accepts no deleted or status filter");
         UUID workspace = ownedWorkspace(userId, filter);
         var counts = search.counts(workspace, filter);
-        return new Stats(counts, counts.values().stream().mapToLong(Long::longValue).sum(), projectClock.instant(), currentUser.resolve(userId).workspace().getDataRevision());
+        return new Stats(counts, counts.values().stream().mapToLong(Long::longValue).sum(), projectClock.instant(), currentUser.resolve(userId).workspace().getDataRevision(),sources.unavailable(workspace));
     }
     private UUID ownedWorkspace(UUID userId, TaskListFilter filter) {
         UUID workspace = currentUser.resolve(userId).workspace().getId();

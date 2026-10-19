@@ -28,6 +28,7 @@ import java.util.Set;
 })
 public class OverviewController {
     private final OverviewQueryService queries;
+    private final com.kopite.devspace.task.application.port.TaskSourceAccess sources;
     @GetMapping
     @Operation(summary="Read workspace Overview",description="Single read snapshot; category/projectId intersection after ownership validation, including archived Projects. projects.total counts active, archived separately. Category buckets include zero counts and an uncategorized bucket; every Task status is always present. Tasks match unsearched stats with projectStatus=all and deleted=false. Totals cover every matching row independent of pages or widget limits; query/status/projectStatus/deleted/limit/cursor and repeated parameters are not accepted.")
     @ApiResponse(responseCode="200",description="Complete owned Project and Task counts",content=@Content(schema=@Schema(implementation=OverviewResponse.class)))
@@ -35,7 +36,8 @@ public class OverviewController {
         @RequestParam(required=false) @Parameter(schema=@Schema(pattern="all|uncategorized|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",defaultValue="all")) String category,
         @RequestParam(required=false) @Parameter(schema=@Schema(type="string",format="uuid")) String projectId,HttpServletRequest http) {
         http.getParameterMap().forEach((name,values)->{if(!Set.of("category","projectId").contains(name)||values.length!=1)throw new OverviewValidationException(name);});
-        var result=queries.get(((InternalUserPrincipal)auth.getPrincipal()).userId(),new OverviewRequest(category,projectId).filter());
+        var user=((InternalUserPrincipal)auth.getPrincipal()).userId(); sources.prepare(user);
+        var result=queries.get(user,new OverviewRequest(category,projectId).filter());
         return com.kopite.devspace.global.response.WorkspaceResponses.ok(OverviewResponse.from(result),result.dataRevision());
     }
 }

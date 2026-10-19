@@ -63,7 +63,29 @@ class BackendOpenApiContractTests {
         Map.entry("/api/v1/widgets/{id}", Set.of("get", "put", "delete")),
         Map.entry("/api/v1/widgets/{id}/data", Set.of("get")),
         Map.entry("/api/v3/dashboards/home", Set.of("get", "put")),
-        Map.entry("/api/v3/dashboards/home/initializations", Set.of("post")));
+        Map.entry("/api/v3/dashboards/home/initializations", Set.of("post")),
+        Map.entry("/api/integrations/github/webhooks",Set.of("post")),
+        Map.entry("/api/v2/integrations/github/account",Set.of("get","delete")),
+        Map.entry("/api/v2/integrations/github/authorization-requests",Set.of("post")),
+        Map.entry("/api/v2/integrations/github/callback",Set.of("get")),
+        Map.entry("/api/v2/integrations/github/installations",Set.of("get")),
+        Map.entry("/api/v2/integrations/github/installations/{installationId}/repositories",Set.of("get")),
+        Map.entry("/api/v2/integrations/github/jobs/{jobId}",Set.of("get")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories",Set.of("get","post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}",Set.of("get","delete")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/cleanup-requests",Set.of("post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/import-settings",Set.of("get","put")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/status-mapping",Set.of("get","put")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/issue-fetches",Set.of("post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/issues",Set.of("get")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/labels",Set.of("get")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/status-mapping-previews",Set.of("post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/sync-requests",Set.of("post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/sync-settings",Set.of("patch")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/sync-status",Set.of("get")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/task-import-previews",Set.of("post")),
+        Map.entry("/api/v2/projects/{projectId}/github/repositories/{linkId}/task-imports",Set.of("post")),
+        Map.entry("/api/v2/tasks/{taskId}/github-issue",Set.of("get","delete")));
 
     @Test void generatedInventoryExactlyMatchesApprovedSurfaceAndRuntimeMappings() throws Exception {
         var api = document();
@@ -93,10 +115,10 @@ class BackendOpenApiContractTests {
             for (String path : mapping.getPatternValues()) if (path.startsWith("/api/"))
                 mapping.getMethodsCondition().getMethods().forEach(method -> implemented.add(method.name().toLowerCase(Locale.ROOT) + " " + path));
         });
-        assertEquals(58, implemented.size());
+        assertEquals(86, implemented.size());
         implemented.add("get /api/v1/auth/callback/{registrationId}");
         implemented.add("post /api/v1/auth/logout");
-        assertEquals(60, documented.size());
+        assertEquals(88, documented.size());
         assertEquals(implemented, documented);
         assertReferencesResolve(api, api);
     }
@@ -107,6 +129,7 @@ class BackendOpenApiContractTests {
         for (var entry : INVENTORY.entrySet()) for (String method : entry.getValue()) {
             String path = entry.getKey();
             var op = api.path("paths").path(path).path(method);
+            if(path.contains("github")){assertGitHubOperation(path,method,op);continue;}
             String success = path.endsWith("/login") || path.contains("/callback/") ? "302"
                 : path.endsWith("/logout") ? "204" : method.equals("post") && (creations.contains(path)||path.endsWith("/documents")||path.equals("/api/v2/attachments")) ? "201" : "200";
             assertEquals(path.equals("/api/v2/dashboards/home") ? Set.of() : Set.of(success), keys(op.path("responses")).stream().filter(c -> c.startsWith("2") || c.startsWith("3")).collect(Collectors.toSet()), path);
@@ -119,7 +142,7 @@ class BackendOpenApiContractTests {
                 assertEquals("header", csrf.path("in").asString());
                 assertEquals(!path.endsWith("/logout"), csrf.path("required").asBoolean());
             } else {
-                assertFalse(op.path("responses").has("409"), path);
+                assertEquals(path.equals("/api/v2/tasks"),op.path("responses").has("409"), path);
                 assertFalse(hasParameter(op, "X-CSRF-Token"));
             }
             if (!path.equals("/api/v2/dashboards/home") && (path.startsWith("/api/v2/") || path.startsWith("/api/v1/project-categories") || path.startsWith("/api/v1/widgets") || path.startsWith("/api/v3/dashboards/"))) {
@@ -198,7 +221,7 @@ class BackendOpenApiContractTests {
             var limit = parameter(list, "limit").path("schema");
             assertEquals(20, limit.path("default").asInt());
             assertEquals(1, limit.path("minimum").asInt()); assertEquals(100, limit.path("maximum").asInt());
-            assertEquals(Set.of("items", "total", "nextCursor"), keys(schemas.path(feature + "ListResponse").path("properties")));
+            assertEquals(feature.equals("Task")?Set.of("items","total","nextCursor","externalDataUnavailable"):Set.of("items", "total", "nextCursor"), keys(schemas.path(feature + "ListResponse").path("properties")));
             assertEquals(Set.of("string", "null"), types(schemas.path(feature + "ListResponse").path("properties").path("nextCursor")));
         }
         assertEquals(Set.of("null"), types(schemas.path("LinkListResponse").path("properties").path("nextCursor")));
@@ -219,6 +242,21 @@ class BackendOpenApiContractTests {
         assertEquals(Set.of("string", "null"), types(schemas.path("OverviewResponse").path("properties").path("projectId")));
     }
 
+    private void assertGitHubOperation(String path,String method,JsonNode operation){
+        boolean webhook=path.equals("/api/integrations/github/webhooks");String success="200";
+        if(method.equals("post")&&(path.endsWith("/authorization-requests")||path.endsWith("/repositories")))success="201";
+        if(method.equals("post")&&(webhook||path.endsWith("/sync-requests")||path.endsWith("/issue-fetches")||path.endsWith("/task-imports")||path.endsWith("/cleanup-requests")))success="202";
+        if(method.equals("delete"))success=path.endsWith("/account")||path.endsWith("/github-issue")?"204":"202";
+        if(path.endsWith("/callback"))success="303";
+        assertEquals(Set.of(success),keys(operation.path("responses")).stream().filter(code->code.startsWith("2")||code.startsWith("3")).collect(Collectors.toSet()),path);
+        for(var response:operation.path("responses").properties())if(Integer.parseInt(response.getKey())>=400)assertEquals("#/components/schemas/ApiError",response.getValue().path("content").path("application/json").path("schema").path("$ref").asString(),path);
+        assertFalse(operation.path("responses").path(success).path("headers").has("X-Workspace-Data-Revision"));
+        if(!method.equals("get")&&!webhook)assertTrue(parameter(operation,"X-CSRF-Token").path("required").asBoolean());
+        boolean idempotent=method.equals("post")&&(path.endsWith("/repositories")||path.endsWith("/sync-requests")||path.endsWith("/issue-fetches")||path.endsWith("/task-imports"));
+        assertEquals(idempotent,hasParameter(operation,"Idempotency-Key"));
+        if(webhook)assertTrue(operation.path("security").isEmpty());
+        else assertTrue(operation.path("security").valueStream().anyMatch(s->s.has("sessionCookie")));
+    }
     private JsonNode document() throws Exception {
         String body = mvc.perform(get("/v3/api-docs")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         Path output = Path.of("build/reports/backend-openapi-review/openapi.json");

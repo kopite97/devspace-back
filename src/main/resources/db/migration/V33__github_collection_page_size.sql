@@ -1,0 +1,1 @@
+ALTER TABLE github_sync_jobs ADD COLUMN page_size INTEGER NOT NULL DEFAULT 100 CHECK(page_size BETWEEN 1 AND 100);

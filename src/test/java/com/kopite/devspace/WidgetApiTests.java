@@ -81,7 +81,7 @@ class WidgetApiTests extends WidgetTestSupport {
             assertEquals("null",s.path("anyOf").get(1).path("type").asString());
         }
         assertEquals("#/components/schemas/BoardWidgetData",schemas.path("WidgetPayload").path("discriminator").path("mapping").path("board").asString());
-        assertEquals(13,schemas.path("TaskSnapshot").path("required").size());
+        assertEquals(14,schemas.path("TaskSnapshot").path("required").size());
         assertTrue(schemas.path("TaskSnapshot").path("properties").path("categoryId").path("type").valueStream().anyMatch(v->v.asString().equals("null")));
     }
     @Test void exportCompleteExamplesFromRealHttpResponses()throws Exception {

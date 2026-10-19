@@ -101,7 +101,7 @@ class WidgetMigrationTests {
     }
 
     @Test void postgresBackupRestoresAndFinalApplicationStartsWithoutChangingRows() throws Exception {
-        flyway(21).migrate();owner(w);
+        flyway(39).migrate();owner(w);
         var storageRoot=Files.createTempDirectory("devspace-restore-storage-");
         Files.writeString(storageRoot.resolve(".devspace-document-storage"),"devspace-document-storage-v1");
         sql("insert into dashboards(workspace_id,dashboard_key,schema_version,revision,widgets,created_at,updated_at,layout_revision) values(?,'home',2,7,'[]',now(),now(),7)",w);

@@ -23,6 +23,15 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
 
+    @Bean @org.springframework.core.annotation.Order(1)
+    SecurityFilterChain githubWebhookSecurity(HttpSecurity http) throws Exception {
+        return http.securityMatcher(request -> "POST".equals(request.getMethod())
+                        && request.getRequestURI().equals(request.getContextPath() + "/api/integrations/github/webhooks"))
+                .sessionManagement(session -> session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+                .requestCache(cache -> cache.disable()).csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll()).build();
+    }
+
     @Bean
     HttpSessionSecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();

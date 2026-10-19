@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX uq_github_redelivery_guid ON github_redelivery_requests(delivery_guid);

@@ -28,6 +28,7 @@ public class ProjectCommandService {
     private final ProjectCreateReplayStore replays;
     private final Clock projectClock;
     private final com.kopite.devspace.projectcategory.domain.ProjectCategoryRepository categories;
+    private final com.kopite.devspace.project.application.port.ProjectExternalLifecycle externalLifecycle;
 
     @Transactional
     public ProjectSnapshot create(UUID userId, String key, CreateProjectCommand command) {
@@ -60,8 +61,10 @@ public class ProjectCommandService {
         project.checkRevision(command.revision());
         if(command.category().present()) validateCategory(workspace.getId(),command.category().id());
         capacity(workspace);
+        String previousStatus=project.getStatus();
         project.update(command.revision(), command.applyTo(project.values()),
                 command.status() == null ? project.getStatus() : command.status(), projectClock.instant());
+        externalLifecycle.statusChanged(workspace.getId(),id,previousStatus,project.getStatus(),projectClock.instant());
         workspace.recordBusinessMutation();
         return ProjectSnapshot.from(project).observed(workspace.getDataRevision());
     }

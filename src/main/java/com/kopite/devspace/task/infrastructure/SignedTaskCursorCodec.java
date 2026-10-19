@@ -25,8 +25,10 @@ public class SignedTaskCursorCodec implements TaskCursorCodec {
     }
 
     @Override public String encode(UUID workspace, TaskListFilter filter, TaskCursor position) {
-        String payload = "v2." + Base64.getUrlEncoder().withoutPadding().encodeToString(
+        boolean scoped=filter.accessScope()!=null&&!filter.accessScope().equals("none");
+        String payload = (scoped?"v3.":"v2.") + Base64.getUrlEncoder().withoutPadding().encodeToString(
                 (position.createdAt() + "/" + position.id()).getBytes(StandardCharsets.UTF_8));
+        if(scoped)payload+="."+filter.accessScope();
         return payload + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(sign(workspace, filter, payload));
     }
 
@@ -34,9 +36,15 @@ public class SignedTaskCursorCodec implements TaskCursorCodec {
         try {
             if (cursor.length() > 512) throw new InvalidTaskCursorException();
             String[] parts = cursor.split("\\.", -1);
-            if (parts.length != 3 || !parts[0].equals("v2")) throw new InvalidTaskCursorException();
-            byte[] supplied = Base64.getUrlDecoder().decode(parts[2]);
-            if (!MessageDigest.isEqual(sign(workspace, filter, parts[0] + "." + parts[1]), supplied)) throw new InvalidTaskCursorException();
+            boolean scoped=parts.length==4&&parts[0].equals("v3");
+            if (!scoped&&(parts.length != 3 || !parts[0].equals("v2"))) throw new InvalidTaskCursorException();
+            if(scoped&&!parts[2].matches("[0-9a-f]{64}"))throw new InvalidTaskCursorException();
+            var original=filter.withAccessScope(scoped?parts[2]:null);
+            String payload=parts[0]+"."+parts[1]+(scoped?"."+parts[2]:"");
+            byte[] supplied = Base64.getUrlDecoder().decode(parts[scoped?3:2]);
+            if (!MessageDigest.isEqual(sign(workspace, original, payload), supplied)) throw new InvalidTaskCursorException();
+            String current=filter.accessScope()==null?"none":filter.accessScope();
+            if(!(scoped?parts[2]:"none").equals(current))throw new com.kopite.devspace.task.domain.TaskConflictException("TASK_ACCESS_SCOPE_CHANGED");
             String[] position = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8).split("/", -1);
             if (position.length != 2) throw new InvalidTaskCursorException();
             var decoded = new TaskCursor(Instant.parse(position[0]), UUID.fromString(position[1]));
@@ -54,6 +62,8 @@ public class SignedTaskCursorCodec implements TaskCursorCodec {
             // All context fields before query have fixed/enum syntax; query is length-prefixed to avoid ambiguous framing.
             String bound = "tasks:" + workspace + ":" + filter.category() + ":" + filter.projectId() + ":" + filter.projectStatus() + ":" + filter.deleted() + ":" + filter.status() + ":" + filter.limit()
                     + ":createdAt-desc,id-desc:" + filter.query().length() + ":" + filter.query() + ":" + payload;
+            if (filter.sourceReason() != null) bound += ":sourceReason:" + filter.sourceReason();
+            if (filter.accessScope() != null && !filter.accessScope().equals("none")) bound += ":accessScope:" + filter.accessScope();
             return mac.doFinal(bound.getBytes(StandardCharsets.UTF_8));
         } catch (GeneralSecurityException impossible) { throw new IllegalStateException("Cannot sign project cursor", impossible); }
     }

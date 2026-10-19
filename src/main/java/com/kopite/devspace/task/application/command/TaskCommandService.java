@@ -31,6 +31,7 @@ public class TaskCommandService {
     private final TaskRepository tasks;
     private final TaskCreateReplayStore replays;
     private final Clock projectClock;
+    private final com.kopite.devspace.task.application.port.TaskSourceAccess sources;
 
     @Transactional
     public TaskSnapshot create(UUID userId, String key, CreateTaskCommand command) {
@@ -47,6 +48,7 @@ public class TaskCommandService {
             if(saved.legacy()) throw new TaskConflictException("IDEMPOTENCY_KEY_REUSED");
             Project originalProject = projects.findOwned(workspace.getId(), saved.result().projectId()).orElseThrow(TaskNotFoundException::new);
             Task original = tasks.findOwned(workspace.getId(), saved.result().id()).orElseThrow(TaskNotFoundException::new);
+            if (original.isExternallyManaged()) sources.requireAccessible(workspace.getId(), original.getId());
             projects.findOwned(workspace.getId(), original.getProjectId()).orElseThrow(TaskNotFoundException::new);
             if (!saved.requestHash().equals(hash)) throw new TaskConflictException("IDEMPOTENCY_KEY_REUSED");
             return saved.result();
@@ -64,6 +66,9 @@ public class TaskCommandService {
     public TaskSnapshot update(UUID userId, UUID id, UpdateTaskCommand command) {
         var workspace = lockWorkspace(userId);
         Task task = lockTask(workspace.getId(), id, command.projectId());
+        var source = sources.requireAccessible(workspace.getId(), id);
+        if (task.isExternallyManaged() && (command.title()!=null || command.description()!=null || command.status()!=null || command.projectId()!=null))
+            throw new TaskConflictException("TASK_SOURCE_MANAGED");
         task.checkRevision(command.revision());
         if (task.getDeletedAt() != null) throw new TaskConflictException("RESOURCE_DELETED");
         var values = command.applyTo(task.values());
@@ -71,25 +76,29 @@ public class TaskCommandService {
         if (!task.getProjectId().equals(target.getId())) requireActive(target);
         task.update(command.revision(), values, projectClock.instant());
         workspace.recordBusinessMutation();
-        return TaskSnapshot.from(task, target).observed(workspace.getDataRevision());
+        return TaskSnapshot.from(task, target).withSource(source).observed(workspace.getDataRevision());
     }
 
     @Transactional
     public TaskSnapshot delete(UUID userId, UUID id, long revision) {
         var workspace = lockWorkspace(userId);
         Task task = lockTask(workspace.getId(), id, null);
+        var source = sources.requireAccessible(workspace.getId(), id);
         task.delete(revision, projectClock.instant());
+        sources.deleted(workspace.getId(), id);
         workspace.recordBusinessMutation();
-        return snapshot(workspace.getId(), task).observed(workspace.getDataRevision());
+        return snapshot(workspace.getId(), task).withSource(source).observed(workspace.getDataRevision());
     }
 
     @Transactional
     public TaskSnapshot restore(UUID userId, UUID id, long revision) {
         var workspace = lockWorkspace(userId);
         Task task = lockTask(workspace.getId(), id, null);
+        var source = sources.requireAccessible(workspace.getId(), id);
         task.restore(revision, projectClock.instant());
+        sources.restored(workspace.getId(), id);
         workspace.recordBusinessMutation();
-        return snapshot(workspace.getId(), task).observed(workspace.getDataRevision());
+        return snapshot(workspace.getId(), task).withSource(source).observed(workspace.getDataRevision());
     }
 
     private TaskSnapshot snapshot(UUID workspace, Task task) {

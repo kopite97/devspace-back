@@ -45,6 +45,7 @@ import java.util.UUID;
 public class TaskController {
     private final TaskCommandService commands;
     private final TaskQueryService queries;
+    private final com.kopite.devspace.task.application.port.TaskSourceAccess sources;
 
     @PostMapping(consumes="application/json")
     @ApiResponse(responseCode="400",description="VALIDATION_ERROR",content=@Content(schema=@Schema(implementation=ApiError.class)))
@@ -105,6 +106,7 @@ public class TaskController {
     @GetMapping
     @ApiResponse(responseCode="200",description="Filtered cursor page and matching total",content=@Content(schema=@Schema(implementation=TaskListResponse.class)))
     @Operation(summary="List owned Tasks",description="createdAt DESC, id DESC. Literal title/Project-name search. deleted=true selects only trash. Cursor binds workspace, all filters and limit; no cross-page snapshot guarantee.")
+    @ApiResponse(responseCode="409",description="TASK_ACCESS_SCOPE_CHANGED: discard cursor and fetch the first page",content=@Content(schema=@Schema(implementation=ApiError.class)))
     @ApiResponse(responseCode="400",description="VALIDATION_ERROR or INVALID_CURSOR",content=@Content(schema=@Schema(implementation=ApiError.class)))
     public ResponseEntity<TaskListResponse> list(Authentication auth,
         @RequestParam(defaultValue="all") @Parameter(schema=@Schema(pattern="all|uncategorized|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",defaultValue="all")) String category,
@@ -114,10 +116,11 @@ public class TaskController {
         @RequestParam(required=false) @Parameter(schema=@Schema(allowableValues={"todo","doing","done"})) String status,
         @RequestParam(defaultValue="false") @Parameter(schema=@Schema(type="boolean",defaultValue="false")) String deleted,
         @RequestParam(defaultValue="20") @Parameter(schema=@Schema(type="integer",minimum="1",maximum="100",defaultValue="20")) int limit,
+        @RequestParam(required=false) String sourceReason,
         @RequestParam(required=false) String cursor, jakarta.servlet.http.HttpServletRequest http) {
         validateQuery(http);
         var request=new TaskListRequest(category,projectId,projectStatus,query,status,deleted,limit,cursor);
-        var result=queries.list(user(auth),request.filter(),cursor);
+        var result=queries.list(user(auth),request.filter().withSourceReason(sourceReason),cursor);
         return com.kopite.devspace.global.response.WorkspaceResponses.ok(TaskListResponse.from(result),result.dataRevision());
     }
 
@@ -130,20 +133,21 @@ public class TaskController {
         @RequestParam(required=false) @Parameter(schema=@Schema(format="uuid")) String projectId,
         @RequestParam(defaultValue="all") @Parameter(schema=@Schema(allowableValues={"all","active","archived"},defaultValue="all")) String projectStatus,
         @RequestParam(defaultValue="") String query,
+        @RequestParam(required=false) String sourceReason,
         @Parameter(hidden=true) @RequestParam org.springframework.util.MultiValueMap<String,String> parameters) {
         for(String field:parameters.keySet())
-            if(!java.util.Set.of("category","projectId","projectStatus","query").contains(field) || parameters.get(field).size()!=1 || (field.equals("category") && parameters.getFirst(field).isEmpty()))
+            if(!java.util.Set.of("category","projectId","projectStatus","query","sourceReason").contains(field) || parameters.get(field).size()!=1 || (field.equals("category") && parameters.getFirst(field).isEmpty()))
                 throw new TaskValidationException(field,"not supported by Task stats");
-        var result=queries.stats(user(auth),new TaskStatsRequest(category,projectId,projectStatus,query).filter());
+        var result=queries.stats(user(auth),new TaskStatsRequest(category,projectId,projectStatus,query).filter().withSourceReason(sourceReason));
         return com.kopite.devspace.global.response.WorkspaceResponses.ok(TaskStatsResponse.from(result),result.dataRevision());
     }
     private void validateQuery(jakarta.servlet.http.HttpServletRequest request) {
         request.getParameterMap().forEach((name,values)->{
-            if(!java.util.Set.of("category","projectId","projectStatus","query","limit","cursor","status","deleted").contains(name)||values.length!=1 || (name.equals("category") && values[0].isEmpty()))
+            if(!java.util.Set.of("category","projectId","projectStatus","query","limit","cursor","status","deleted","sourceReason").contains(name)||values.length!=1 || (name.equals("category") && values[0].isEmpty()))
                 throw new TaskValidationException(name,"invalid query parameter");
         });
     }
-    private UUID user(Authentication auth) { return ((InternalUserPrincipal)auth.getPrincipal()).userId(); }
+    private UUID user(Authentication auth) { var user=((InternalUserPrincipal)auth.getPrincipal()).userId(); sources.prepare(user); return user; }
     private UUID id(String value) { return TaskRequestFields.uuid(value,"id"); }
     private <T> ResponseEntity<T> ok(T body) { return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body); }
 }

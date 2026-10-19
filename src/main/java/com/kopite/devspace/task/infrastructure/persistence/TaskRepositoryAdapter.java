@@ -14,6 +14,7 @@ public class TaskRepositoryAdapter implements TaskRepository {
     private final TaskJpaRepository repository;
 
     public Task save(Task task) { return repository.save(task); }
+    public void remove(Task task) { repository.delete(task); }
     public Optional<Task> findOwned(UUID workspaceId, UUID id) {
         return repository.findByWorkspaceIdAndId(workspaceId, id);
     }

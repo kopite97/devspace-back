@@ -59,7 +59,7 @@ class ProjectOpenApiTests {
         JsonNode api = json.readTree(body);
         var paths = api.get("paths");
         assertEquals(Set.of("/api/v2/projects", "/api/v2/projects/{id}", "/api/v2/projects/category-counts"), paths.properties().stream()
-                .map(java.util.Map.Entry::getKey).filter(name -> name.startsWith("/api/v2/projects")).collect(Collectors.toSet()));
+                .map(java.util.Map.Entry::getKey).filter(name -> name.startsWith("/api/v2/projects")&&!name.contains("/github/")).collect(Collectors.toSet()));
         assertEquals(Set.of("get", "post"), keys(paths.get("/api/v2/projects")));
         assertEquals(Set.of("get", "patch"), keys(paths.get("/api/v2/projects/{id}")));
 

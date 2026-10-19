@@ -42,6 +42,8 @@ public class Task {
     @Column(nullable = false)
     private Instant updatedAt;
     private Instant deletedAt;
+    @Column(nullable = false, columnDefinition = "text")
+    private String sourceType = "local";
 
     public static Task create(UUID workspaceId, TaskValues values, Instant now) {
         Task task = new Task();
@@ -64,6 +66,8 @@ public class Task {
         checkRevision(expected);
         if (deletedAt != null) throw new TaskConflictException("RESOURCE_DELETED");
         Objects.requireNonNull(values);
+        if (isExternallyManaged() && (!title.equals(values.title()) || !description.equals(values.description())
+                || !status.equals(values.status()) || !projectId.equals(values.projectId()))) throw new TaskConflictException("TASK_SOURCE_MANAGED");
         Instant time = prepareMutation(now);
         assign(values);
         advance(time);
@@ -87,6 +91,21 @@ public class Task {
 
     public TaskValues values() {
         return new TaskValues(title, projectId, description, status, priority, tag);
+    }
+    public boolean isExternallyManaged() { return "github".equals(sourceType); }
+    public static Task fromGitHub(UUID workspaceId, TaskValues values, Instant now) {
+        Task task = create(workspaceId, values, now); task.sourceType = "github"; return task;
+    }
+    public boolean synchronizeSource(String title, String description, String status, boolean metadataChanged, Instant now) {
+        if (!isExternallyManaged() || deletedAt != null) return false;
+        var values = new TaskValues(title, projectId, description, status, priority, tag);
+        if (!metadataChanged && values.equals(values())) return false;
+        Instant time = prepareMutation(now); assign(values); advance(time); return true;
+    }
+    public void convertToLocal(long expected, Instant now) {
+        checkRevision(expected);
+        if (!isExternallyManaged()) throw new TaskConflictException("INVALID_RESOURCE_STATE");
+        Instant time = prepareMutation(now); sourceType = "local"; advance(time);
     }
 
     private Instant prepareMutation(Instant now) {

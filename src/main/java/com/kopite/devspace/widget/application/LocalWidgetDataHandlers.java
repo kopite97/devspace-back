@@ -18,7 +18,7 @@ public class LocalWidgetDataHandlers {
     private WidgetDataHandler handler(String type,boolean paged,BiFunction<UUID,Request,WidgetDataHandler.Result> read) {
         return new WidgetDataHandler(){public String type(){return type;}public boolean paginated(){return paged;}public Result read(UUID user,WidgetConfig config,String cursor){return read.apply(user,new Request((LocalWidgetConfig)config,cursor));}};
     }
-    private WidgetPayload.Statistics stats(TaskQueryService.Stats s){return new WidgetPayload.Statistics(s.counts().getOrDefault("todo",0L),s.counts().getOrDefault("doing",0L),s.counts().getOrDefault("done",0L),s.total(),s.asOf());}
+    private WidgetPayload.Statistics stats(TaskQueryService.Stats s){return new WidgetPayload.Statistics(s.counts().getOrDefault("todo",0L),s.counts().getOrDefault("doing",0L),s.counts().getOrDefault("done",0L),s.total(),s.asOf(),s.externalDataUnavailable());}
     @Bean WidgetDataHandler overviewData(){return handler("overview",false,(u,r)->{
         var s=r.config().selection();var v=overview.get(u,new OverviewFilter(s.categoryFilter(),s.projectId()));
         return new WidgetDataHandler.Result(new WidgetPayload.Overview(v.projects(),stats(v.tasks())),null,v.tasks().total()==0&&v.projects().stream().allMatch(c->c.active()+c.archived()==0),null);

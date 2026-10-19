@@ -12,7 +12,7 @@ import java.util.List;
 @Schema(discriminatorProperty="kind",oneOf={WidgetPayload.Overview.class,WidgetPayload.Board.class,WidgetPayload.Journal.class,WidgetPayload.Milestone.class,WidgetPayload.Links.class})
 public interface WidgetPayload {
     @JsonProperty("kind") String kind();
-    @Schema(name="WidgetTaskStatistics") record Statistics(long todo,long doing,long done,long total,Instant asOf){}
+    @Schema(name="WidgetTaskStatistics") record Statistics(long todo,long doing,long done,long total,Instant asOf,boolean externalDataUnavailable){}
     @Schema(name="WidgetTaskColumn") record Column(String status,List<TaskSnapshot> items){public Column{items=List.copyOf(items);}}
     @Schema(name="OverviewWidgetData") record Overview(List<ProjectCategoryCount> projects,Statistics tasks) implements WidgetPayload {
         public Overview{projects=List.copyOf(projects);}@JsonProperty("kind") @Schema(allowableValues="overview") public String kind(){return "overview";}

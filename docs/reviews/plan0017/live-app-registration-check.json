@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-19",
+  "scope": "Read-only GitHub App JWT registration and installation discovery",
+  "appJwtAuthentication": "passed",
+  "appIdMatches": true,
+  "clientIdMatches": true,
+  "issuesPermission": "read",
+  "activeInstallationCount": 1,
+  "reportedEventSubscriptions": [],
+  "localAppSlug": "Corrected to the authenticated App registration value; no credentials recorded",
+  "remoteSettingsChanged": false,
+  "featureEnabledChanged": false,
+  "webhookActiveChanged": false,
+  "notVerified": [
+    "Browser user OAuth consent and client-secret exchange",
+    "Live repository Issue-to-Task synchronization",
+    "Public webhook delivery, subscription configuration and signature processing",
+    "Organization approval and live user/installation revocation"
+  ]
+}

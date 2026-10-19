@@ -46,7 +46,7 @@ class DashboardOverviewOpenApiTests {
         Map<String,Set<String>> fields=Map.of(
             "SaveHomeLayoutRequest",Set.of("schemaVersion","layoutRevision","placements"),
             "HomeLayoutSnapshot",Set.of("id","schemaVersion","initialized","layoutRevision","placements","widgets"),
-            "OverviewResponse",Set.of("category","projectId","projects","tasks","asOf"),
+            "OverviewResponse",Set.of("category","projectId","projects","tasks","asOf","externalDataUnavailable"),
             "OverviewProjectCounts",Set.of("total","archived","byCategory"),
             "OverviewProjectCategoryCounts",Set.of("categoryId","total","archived"),
             "OverviewTaskCounts",Set.of("todo","doing","done","total"));

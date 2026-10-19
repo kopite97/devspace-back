@@ -9,3 +9,4 @@ Accepted decisions in decision order.
 
 - [DECISION-0005: Owner-neutral DocumentSpace access](DECISION-0005-document-space-access.md)
 - [DECISION-0006: Durable Attachment deletion recovery](DECISION-0006-attachment-deletion-recovery.md)
+- [DECISION-0007: GitHub source-owned Task synchronization](DECISION-0007-github-source-owned-task-sync.md)
