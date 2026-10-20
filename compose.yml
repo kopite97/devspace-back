@@ -66,4 +66,5 @@ volumes:
 
 networks:
   backend:
+    external: true
     name: devspace
