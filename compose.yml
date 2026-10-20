@@ -26,6 +26,7 @@ services:
       start_period: 10s
 
   app:
+    container_name: devspace-back
     build:
       context: .
       dockerfile: Dockerfile
