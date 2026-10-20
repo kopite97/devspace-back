@@ -2,15 +2,13 @@
 services:
   postgres:
     image: postgres:16.4
+    container_name: devspace-db
     restart: unless-stopped
 
     environment:
       POSTGRES_DB: ${DB_NAME:?DB_NAME is required}
       POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-
-    ports:
-      - "127.0.0.1:${DB_PORT:-5432}:5432"
 
     volumes:
       - devspace-postgres-data:/var/lib/postgresql/data
@@ -68,3 +66,4 @@ volumes:
 
 networks:
   backend:
+    name: devspace
