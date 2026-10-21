@@ -41,11 +41,18 @@ services:
       DB_PORT: "5432"
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
       FILE_STORAGE_ROOT: /var/lib/devspace/document-storage
+      GITHUB_PRIVATE_KEY_PATH: /run/secrets/github-app.pem
 
     ports:
       - "127.0.0.1:${APP_PORT:-18080}:8080"
 
     volumes:
+      - type: bind
+        source: ${GITHUB_PRIVATE_KEY_PATH:?GITHUB_PRIVATE_KEY_PATH must point to the host PEM file}
+        target: /run/secrets/github-app.pem
+        read_only: true
+        bind:
+          create_host_path: false
       - type: bind
         source: /var/lib/devspace/document-storage
         target: /var/lib/devspace/document-storage

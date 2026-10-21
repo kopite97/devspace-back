@@ -291,7 +291,7 @@ Validation:
 
 - [x] 프론트엔드 안내의 모든 endpoint·DTO·상태 값·예시를 실제 OpenAPI와 통합 테스트 결과에 대조한다.
 - [x] 문서만으로 연결 → 가져오기 → 라벨 변경 반영 → 충돌 표시 → 연결 해제를 재현할 수 있는지 검토한다.
-- [ ] 실제 GitHub App 시험은 격리된 저장소에서 수행하고 사용한 권한·시나리오·결과를 기록한다. 불가능하면 사유와 모의 검증 범위를 명시하고 실제 연동 확인을 미해결 항목으로 남긴다.
+- [x] 실제 GitHub App 시험은 격리된 저장소에서 수행하고 사용한 권한·시나리오·결과를 기록한다. 불가능하면 사유와 모의 검증 범위를 명시하고 실제 연동 확인을 미해결 항목으로 남긴다.
 
 ### Sessions 4–6 실행 기록 (2026-10-19)
 
@@ -321,7 +321,7 @@ backend 개발/자동 검증 후 [프론트 구현 안내](../requirements/front
 - [x] `./gradlew.bat test`와 `./gradlew.bat build` 또는 환경에 맞는 동등 명령을 실행하고 결과를 기록한다. 중복 실행은 필요한 경우에만 수행한다.
 - [x] 상태 변환/필터 단위 테스트, PostgreSQL migration·제약·잠금·복원 통합 테스트, API 권한/CSRF/재실행 테스트가 통과한다.
 - [x] GitHub HTTP 모의 서버로 token·pagination·rate limit·timeout·404·역순 결과·중복 전달·재시작·누락 복구를 검증한다. 이를 위해 새 테스트 의존성이 필요하면 먼저 승인받는다.
-- [ ] 격리된 실제 GitHub App에서 연결/선택 저장소/Issue 가져오기/라벨 변경/닫기/재개방/설치 철회를 확인한다. 조직 사용자 철회 등 검증하지 못한 경로는 별도로 남긴다.
+- [x] 격리된 실제 GitHub App에서 연결/선택 저장소/Issue 가져오기/라벨 변경/닫기/재개방/설치 철회를 확인한다. 조직 사용자 철회 등 검증하지 못한 경로는 별도로 남긴다. 설치 철회는 2026-10-21 일시 중지와 복원으로 검증했으며 제거는 미실행이다.
 - [x] Task 및 기존 프로젝트/보드/위젯/overview API 회귀, N+1·페이지 제한·호출량·작업 backlog와 동기화 지연을 확인한다.
 - [x] `docs/requirements/frontend/github-app-issue-task-integration.md`가 존재하고 최종 구현과 검증 결과에 일치한다.
 - [x] No failures caused by this Plan remain.
@@ -333,8 +333,8 @@ backend 개발/자동 검증 후 [프론트 구현 안내](../requirements/front
 - [x] Request and response schemas match the approved backend contract.
 - [x] Bean Validation constraints are reflected where applicable.
 - [x] HTTP methods and response status codes match the contract.
-- [ ] Swagger UI renders the implemented endpoints correctly.
-- [ ] 실제 HTTP로 정상·권한 없음·중복·충돌·작업 대기·실패 응답을 검증한다.
+- [x] Swagger UI renders the implemented endpoints correctly.
+- [x] 실제 HTTP로 정상·권한 없음·중복·충돌·작업 대기·실패 응답을 검증한다.
 
 ## Completion
 
@@ -352,3 +352,51 @@ backend 개발/자동 검증 후 [프론트 구현 안내](../requirements/front
 Webhook은 비활성으로 유지했다. 자동 가져오기 설정 저장은 응답 미확인이다.
 남은 실제 검증은 사용자가 추후 진행하기로 했으므로 전체 완료 항목은 체크하지 않는다.
 근거와 재개 절차: [수동 검증 기록](../reviews/plan0017/live-manual-validation.md).
+
+## 2026-10-20 배포 검증 재개
+
+사용자 요청으로 검증을 재개했다. 개인 서버의 PEM 마운트 누락으로 인한 재시작을
+Compose 읽기 전용 마운트와 UID/GID 10001 파일 권한으로 수정하고 같은 이미지로
+app을 재생성했다. Compose 검증, PEM 읽기, Spring Boot 정상 시작을 확인했다.
+프론트의 임시 결과 페이지 프록시가 없고, 공개 서비스 브라우저 접속은 사용자 거절로
+차단되어 실제 연동 검증은 완료하지 못했다. Webhook 활성화 여부도 확인 대기다.
+상세 근거는 [수동 검증 기록](../reviews/plan0017/live-manual-validation.md)에 남긴다.
+상태는 active를 유지한다.
+
+### 공개 브라우저 재확인 및 사용자 설명
+
+2026-10-20 Chrome에서 공개 서비스 접근, Google 로그인, 인증된 GitHub 계정/저장소
+조회에 성공했다. 공개 계정은 disconnected이며 현재 프로젝트의 연결 목록은 비어 있다.
+배포 Swagger 비활성화와 프론트 GitHub 기능 미구현은 사용자가 확인한 의도된 현재 상태다.
+프론트 구현이나 Swagger 공개를 이번 작업에 추가하지 않는다. 기존 로컬 검증과 공개 환경의
+상태를 구분하며, 남은 실제 연동 검증과 PLAN 상태는 그대로 유지한다.
+상세 결과는 [수동 검증 기록](../reviews/plan0017/live-manual-validation.md)을 따른다.
+
+### 로컬 실제 HTTP 검증 재개
+
+2026-10-20 기존 로컬 DB/서버를 기동하고 브라우저 로그인, GitHub connected 및 저장소
+verified를 확인했다. Swagger에서 중지 200, 오래된 revision의 재개 409,
+정상 재개 200과 baseline 완료, 자동 가져오기 조건 활성화 200과 baseline 완료를 확인했다.
+기존 Task revision은 유지됐고 Issue #2가 새 Task로 생성되지 않았다.
+검증 후 enabled=false/빈 조건/paused=false로 복원했으며 현재 설정 revision은 6이다.
+비로그인 account API의 실제 HTTP 401도 확인했다.
+
+GitHub 사이트 접근이 사용자 거절로 차단되어 원격 조건 전환과 Webhook 등은 검증하지
+못했다. 우회하지 않았으며 전체 연동·전체 Swagger 렌더링 완료 항목은 체크하지 않는다.
+소스 변경 없이 결과와 다음 시작점을 [수동 검증 기록](../reviews/plan0017/live-manual-validation.md)에
+추가했다. PLAN은 active다.
+
+### 2026-10-21 실제 변경·접근 차단 검증
+
+사용자가 테스트 저장소 변경과 설치 일시 중지·복원을 승인했다. 조건 전환 자동 가져오기,
+라벨 충돌, 중지 중 원본 수집 및 재개 반영, not_planned와 재개방, 재실행 멱등성 및
+429 제한을 실제 GitHub와 로컬 API에서 확인했다. 설치 중지 시 보호 Task 상세/목록 및
+동기화가 차단되고 복원 후 verified로 회복됐다. 신규 시험 Task의 일반 Task 전환과
+휴지통 복원도 통과했다. Swagger GitHub 28개 operation을 펼쳐 응답 렌더링을 확인했다.
+
+공개 Webhook의 실제 202 전달은 확인했으나 공개 DB의 Task 반영과 수신 중단 복구까지
+검증한 것은 아니다. 조직 승인·사용자 철회·다른 계정 교체는 별도 시험 계정이 없어 남긴다.
+설치 제거, 저장소 단위 일괄 해제/복구 역시 모의 검증과 구분한다. 전체 실행 완료는 체크하지
+않고 active를 유지한다. 최종 설정 revision=12, 자동 가져오기 비활성, 빈 조건, paused=false다.
+Issue #2는 open/라벨 없음, App 설치는 활성 상태로 복원했다. 상세 작업 ID와 잔여 상태는
+[수동 검증 기록](../reviews/plan0017/live-manual-validation.md)을 따른다.

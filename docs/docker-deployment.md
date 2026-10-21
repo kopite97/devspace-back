@@ -121,3 +121,21 @@ Render 무료 PostgreSQL은 생성 30일 후 만료되어 접근할 수 없고,
 ## Document attachment storage
 
 Set `FILE_STORAGE_ROOT` to a provisioned persistent directory and mount it with write access for UID/GID 10001. A regular `.devspace-document-storage` marker containing `devspace-document-storage-v1` is required. See [storage provisioning and recovery](operations/document-storage.md) for named volumes, bind mounts, backup/restore and delayed cleanup semantics. An ephemeral service filesystem is insufficient for document attachments.
+
+## GitHub App private key with Compose
+
+`compose.yml` requires `GITHUB_PRIVATE_KEY_PATH` in the Compose interpolation environment
+(deployment uses `--env-file /opt/devspace-back/.env`) to identify an existing **host PEM file**.
+It mounts only that file read-only at `/run/secrets/github-app.pem` and overrides the
+application's `GITHUB_PRIVATE_KEY_PATH` to that container path. Missing sources fail instead
+of creating directories. This Compose deployment requires the file even when GitHub is disabled.
+
+Provision the file for container UID/GID `10001:10001` with mode `600`. Do not copy it into
+the image or repository. After changing the mount or environment, recreate the app container.
+Verify readability without printing the key:
+`docker exec devspace-back sh -c 'test -r /run/secrets/github-app.pem'`.
+
+Set callback and return URLs to the public HTTPS origin. Proxy the callback's `/api/`
+path to the backend and preserve the session cookie. If using the backend's temporary
+`/github/connection-result` page, proxy that exact path too; an SPA fallback is not that page.
+Otherwise use an implemented frontend result route that handles `?github=...`.
